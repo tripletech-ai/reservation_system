@@ -2,6 +2,7 @@
  * 一鍵初始化所有資料表
  */
 function initAllTables() {
+    initManagerTable();
     initUserTable();
     initBookingTable();
     initBusinessHoursTable();
@@ -25,25 +26,19 @@ function createTableIfNotExists(tableName, headers) {
         sheet.setFrozenRows(1);
         console.log(`Table "${tableName}" created successfully.`);
     } else {
-        console.log(`Table "${tableName}" already exists.`);
+        console.log(`Table "${tableName}" already exists. Checking for missing columns...`);
+        // 取得現有標題
+        const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        const missingHeaders = headers.filter(h => !currentHeaders.includes(h));
+
+        if (missingHeaders.length > 0) {
+            const nextCol = sheet.getLastColumn() + 1;
+            sheet.getRange(1, nextCol, 1, missingHeaders.length).setValues([missingHeaders]);
+            console.log(`Updated "${tableName}": Added columns [${missingHeaders.join(', ')}]`);
+        }
     }
     return sheet;
 }
-
-/**
- * 建立設定資料表 (config)
- */
-function initConfigTable() {
-    const headers = [
-        'uid',
-        'user_uid',
-        'google_calendar_id',
-        'create_at',
-        'update_at'
-    ];
-    createTableIfNotExists('config', headers);
-}
-
 
 
 /**
@@ -61,6 +56,7 @@ function initManagerTable() {
         'bank_account',
         'bank_account_owner',
         'line_notify_content',
+        'questionnaire',
         'create_at',
         'update_at'
     ];
@@ -77,7 +73,7 @@ function initUserTable() {
         'name',
         'line_uid',
         'phone',
-        'health_profile',
+        'questionnaire',
         'status',
         'create_at',
         'update_at'

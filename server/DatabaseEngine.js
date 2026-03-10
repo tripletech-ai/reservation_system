@@ -36,15 +36,29 @@ const Database = {
      */
     _executeSelect: function (sql) {
         const isCount = /SELECT\s+COUNT\(/i.test(sql);
+        const isSelectAll = /SELECT\s+\*\s+FROM/i.test(sql);
         const tableName = this._extractTableName(sql, 'FROM');
         const data = this._getTableData(tableName);
         let results = data;
 
         // 處理 WHERE (支援 AND, OR, BETWEEN, =, !=, >, <)
-        const whereMatch = sql.match(/WHERE\s+(.+?)(?=\s+ORDER BY|\s+LIMIT|\s+OFFSET|$)/i);
+        const whereMatch = sql.match(/WHERE\s+([\s\S]+?)(?=\s+ORDER BY|\s+LIMIT|\s+OFFSET|$)/i);
         if (whereMatch) {
             const condition = whereMatch[1];
             results = results.filter(row => this._evaluateCondition(row, condition));
+        }
+
+        // 處理特定欄位選擇 (如果不是 SELECT * 且不是 COUNT)
+        if (!isSelectAll && !isCount) {
+            const selectColsMatch = sql.match(/SELECT\s+([\s\S]+?)\s+FROM/i);
+            if (selectColsMatch) {
+                const cols = selectColsMatch[1].split(',').map(c => c.trim());
+                results = results.map(row => {
+                    const obj = {};
+                    cols.forEach(c => obj[c] = row[c]);
+                    return obj;
+                });
+            }
         }
 
         // 如果是 COUNT(*)
@@ -53,7 +67,7 @@ const Database = {
         }
 
         // 處理 ORDER BY
-        const orderMatch = sql.match(/ORDER BY\s+(.+?)(?=\s+LIMIT|\s+OFFSET|$)/i);
+        const orderMatch = sql.match(/ORDER BY\s+([\s\S]+?)(?=\s+LIMIT|\s+OFFSET|$)/i);
         if (orderMatch) {
             const parts = orderMatch[1].trim().split(/\s+/);
             const col = parts[0];
@@ -64,7 +78,6 @@ const Database = {
                 let valA = a[col];
                 let valB = b[col];
 
-                // 嘗試轉為數字比較
                 if (!isNaN(valA) && !isNaN(valB)) {
                     valA = Number(valA);
                     valB = Number(valB);
@@ -90,13 +103,17 @@ const Database = {
      */
     _executeInsert: function (sql) {
         const tableName = this._extractTableName(sql, 'INTO');
-        const colsMatch = sql.match(/\((.+?)\)\s+VALUES/i);
-        const valsMatch = sql.match(/VALUES\s*\((.+?)\)/i);
+        const colsMatch = sql.match(/\(([\s\S]+?)\)\s+VALUES/i);
+        const valsMatch = sql.match(/VALUES\s*\(([\s\S]+)\)/i);
 
         if (!colsMatch || !valsMatch) throw new Error('INSERT 語法錯誤，請確保包含 (columns) 與 VALUES (values)');
 
         const cols = colsMatch[1].split(',').map(s => s.trim());
-        const vals = valsMatch[1].split(',').map(s => s.trim().replace(/^'|'$/g, ''));
+        // 改用 regex 拆分 VALUES，避免 JSON 內部的逗號導致錯誤
+        const valsStr = valsMatch[1].trim();
+        const vals = valsStr.split(/,(?=(?:(?:[^']*'){2})*[^']*$)/).map(s => {
+            return s.trim().replace(/^'|'$/g, '').replace(/''/g, "'");
+        });
 
         const ss = getSpreadsheetApp();
         const sheet = ss.getSheetByName(tableName);
@@ -125,10 +142,11 @@ const Database = {
 
         if (!setMatch || !whereMatch) throw new Error('UPDATE 必須包含 SET 與 WHERE 條件');
 
-        const setPairs = setMatch[1].split(',').map(p => {
-            const parts = p.split('=');
-            return [parts[0].trim(), parts[1].trim().replace(/^'|'$/g, '')];
-        });
+        const setPairs = setMatch[1].split(/,(?=(?:(?:[^']*'){2})*[^']*$)/).map(p => {
+            const eqIdx = p.indexOf('=');
+            if (eqIdx === -1) return null;
+            return [p.substring(0, eqIdx).trim(), p.substring(eqIdx + 1).trim().replace(/^'|'$/g, '').replace(/''/g, "'")];
+        }).filter(p => p !== null);
 
         const ss = getSpreadsheetApp();
         const sheet = ss.getSheetByName(tableName);
@@ -201,7 +219,7 @@ const Database = {
     },
 
     _extractTableName: function (sql, keyword) {
-        const regex = new RegExp(`${keyword}\\s+(\\w+)`, 'i');
+        const regex = new RegExp(`${keyword}\\s+([\\w\\d_]+)`, 'i');
         const match = sql.match(regex);
         if (!match) throw new Error(`無法解析資料表名稱，請確認語法是否包含 ${keyword}`);
         return match[1];

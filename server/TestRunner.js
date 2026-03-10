@@ -84,6 +84,23 @@ function runAllTests() {
             return res.success === false && res.error.includes('必須包含 WHERE');
         });
 
+        tester.test('SELECT 特定欄位測試', () => {
+            const res = Database.query(`SELECT name FROM ${testTableName} WHERE uid = 't2'`);
+            return res.length === 1 && res[0].name === 'User2' && res[0].uid === undefined;
+        });
+
+        tester.test('多行 SQL 解析測試', () => {
+            const multiLineSql = `
+                INSERT INTO ${testTableName} 
+                (uid, name, score) 
+                VALUES 
+                ('t3', 'MultiLine', 77)
+            `;
+            const res = Database.query(multiLineSql);
+            const data = Database.query(`SELECT * FROM ${testTableName} WHERE uid = 't3'`);
+            return res.success === true && data[0].name === 'MultiLine';
+        });
+
     } finally {
         // 測試完成後刪除測試表
         const ss = getSpreadsheetApp();
