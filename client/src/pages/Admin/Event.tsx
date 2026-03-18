@@ -2,7 +2,7 @@ import React from 'react';
 import { Edit2, Trash2, Loader2, RefreshCcw, Clock, Plus, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { executeSQL, executeNonQuery } from '../../utils/database';
+import { callGasApi } from '../../utils/database';
 import { useAuth } from '../../utils/auth';
 import { QUERY_CONFIG } from '../../utils/constants';
 import type { EventData } from '../../types';
@@ -26,10 +26,18 @@ const Event: React.FC = () => {
         queryKey: ['events_and_menus'],
         queryFn: async () => {
             const [events, menus] = await Promise.all([
-                executeSQL<EventData>(`SELECT * FROM event WHERE manager_uid = '${manager?.uid}' ORDER BY create_at DESC`),
-                executeSQL<{ uid: string; name: string }>(`SELECT uid, name FROM schedule_menu WHERE manager_uid = '${manager?.uid}'`)
+                callGasApi<EventData[]>({
+                    action: "select",
+                    table: 'event',
+                    where: `manager_uid = '${manager?.uid}' ORDER BY create_at DESC`
+                }),
+                callGasApi<{ uid: string; name: string }[]>({
+                    action: "select",
+                    table: 'schedule_menu',
+                    where: `manager_uid = '${manager?.uid}'`
+                })
             ]);
-            return { events, menus };
+            return { events: events || [], menus: menus || [] };
         },
         enabled: !!manager?.uid,
         staleTime: QUERY_CONFIG.STALE_TIME,
@@ -39,8 +47,12 @@ const Event: React.FC = () => {
     const deleteMutation = useMutation({
         mutationFn: async (uid: string) => {
             if (!confirm('確定要刪除此活動嗎？')) return;
-            const success = await executeNonQuery(`DELETE FROM event WHERE uid = '${uid}'`);
-            if (!success) throw new Error('刪除失敗');
+            const res = await callGasApi({
+                action: "delete",
+                table: "event",
+                where: `uid = '${uid}'`
+            });
+            if (!res) throw new Error('刪除失敗');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['events_and_menus'] });

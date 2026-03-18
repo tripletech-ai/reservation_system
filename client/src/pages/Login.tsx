@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LogIn, User, Lock, ArrowRight, Loader2 } from 'lucide-react';
-import { executeSQL } from '../utils/database';
+import { callGasApi } from '../utils/database';
 import { useAuth } from '../utils/auth';
 
 const Login: React.FC = () => {
@@ -19,8 +19,11 @@ const Login: React.FC = () => {
 
         try {
             // 從 manager 表檢查帳號密碼
-            const sql = `SELECT * FROM manager WHERE account = '${account}' AND password = '${password}' LIMIT 1`;
-            const result = await executeSQL(sql);
+            const result = await callGasApi<any[]>({
+                action: "select",
+                table: 'manager',
+                where: `account = '${account}' AND password = '${password}' LIMIT 1`
+            });
 
             if (result && result.length > 0) {
                 login(result[0]); // 儲存 Session

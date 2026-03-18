@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { executeSQL, executeNonQuery } from '../../utils/database';
+import { callGasApi } from '../../utils/database';
 import { generateUid } from '../../utils/id';
 import type { ScheduleMenu, ScheduleTime, ScheduleOverride } from '../../types';
 
@@ -49,28 +49,50 @@ const makeTempTime = (menuUid: string, dow: number): ScheduleTime => ({
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+import { useAuth } from '../../utils/auth';
+
 const ScheduleTimeEdit: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { manager } = useAuth();
     const isNew = id === 'new';
 
     const initialDataFromState = location.state?.initialData as { menu: ScheduleMenu; times: ScheduleTime[]; overrides: ScheduleOverride[] } | undefined;
+    const [targetUid] = useState(() => isNew ? generateUid() : id!);
 
     // ── 取得原始資料（只有編輯模式才 query）──
     const { data, isLoading, isFetching } = useQuery({
-        queryKey: ['schedule_menu', id],
+        queryKey: ['schedule_menu', targetUid],
         queryFn: async () => {
-            const [menus, times, overrides] = await Promise.all([
-                executeSQL<ScheduleMenu>(`SELECT * FROM schedule_menu WHERE uid = '${id}' LIMIT 1`),
-                executeSQL<ScheduleTime>(`SELECT * FROM schedule_time WHERE schedule_menu_uid = '${id}' ORDER BY day_of_week ASC`),
-                executeSQL<ScheduleOverride>(`SELECT * FROM schedule_override WHERE schedule_menu_uid = '${id}' ORDER BY override_date DESC`),
-            ]);
-            return { menu: menus[0] ?? null, times, overrides };
+            let menu = initialDataFromState?.menu || null;
+            let times = initialDataFromState?.times || [];
+            
+            // 編輯模式下，必定請求 overrides
+            const overrides = await callGasApi<ScheduleOverride[]>({ 
+                action: 'select', 
+                table: 'schedule_override', 
+                where: `schedule_menu_uid = '${targetUid}' ORDER BY override_date DESC` 
+            });
+
+            // 如果是直接網址進入 (無 state)，則抓取全部
+            if (!menu && !isNew) {
+                const [menusRes, timesRes] = await Promise.all([
+                    callGasApi<ScheduleMenu[]>({ action: 'select', table: 'schedule_menu', where: `uid = '${targetUid}' LIMIT 1` }),
+                    callGasApi<ScheduleTime[]>({ action: 'select', table: 'schedule_time', where: `schedule_menu_uid = '${targetUid}' ORDER BY day_of_week ASC` }),
+                ]);
+                menu = menusRes?.[0] ?? null;
+                times = timesRes || [];
+            } else if (isNew && !menu) {
+                // 新增模式且無初始資料
+                menu = { uid: targetUid, manager_uid: manager?.uid || '', name: '未命名模板', create_at: '', update_at: '' };
+                times = [];
+            }
+
+            return { menu, times, overrides: overrides || [] };
         },
-        initialData: initialDataFromState,
-        enabled: !!id && !isNew && !initialDataFromState,
+        enabled: !!targetUid,
         staleTime: 1000 * 60 * 5, // 快取 5 分鐘
         gcTime: 1000 * 60 * 30, // 快取存留 30 分鐘
     });
@@ -94,8 +116,7 @@ const ScheduleTimeEdit: React.FC = () => {
     const [editingOverride, setEditingOverride] = useState<ScheduleOverride | null>(null);
 
     const addSlot = (dow: number) => {
-        if (!id) return;
-        setTimes((prev) => [...prev, makeTempTime(id, dow)]);
+        setTimes((prev) => [...prev, makeTempTime(targetUid, dow)]);
     };
 
     const removeSlot = (uid: string) => {
@@ -138,10 +159,14 @@ const ScheduleTimeEdit: React.FC = () => {
 
     const deleteOverride = async (uid: string) => {
         if (!window.confirm('確定要刪除此特別日期設定嗎？')) return;
-        const res = await executeNonQuery(`DELETE FROM schedule_override WHERE uid = '${uid}'`);
-        if (res.success) {
+        const res = await callGasApi({
+            action: "delete",
+            table: "schedule_override",
+            where: `uid = '${uid}'`
+        });
+        if (res) {
             setOverrides(prev => prev.filter(o => o.uid !== uid));
-            queryClient.invalidateQueries({ queryKey: ['schedule_menu', id] });
+            queryClient.invalidateQueries({ queryKey: ['schedule_menu', targetUid] });
         } else {
             alert('刪除失敗');
         }
@@ -159,38 +184,60 @@ const ScheduleTimeEdit: React.FC = () => {
             alert('此日期已經有特別設定了，請直接編輯該日期。');
             return;
         }
-
         const now = new Date().toISOString();
-        let sql = '';
-        let targetUid = editingOverride?.uid || generateUid();
+        const targetUidOverride = editingOverride?.uid || generateUid();
 
         setIsSavingOverride(true);
         try {
+            let res;
             if (editingOverride) {
-                sql = `UPDATE schedule_override SET override_date = '${inputDate}', override_time = '${overrideData.override_time}', max_capacity = ${overrideData.max_capacity}, is_closed = ${overrideData.is_closed}, update_at = '${now}' WHERE uid = '${editingOverride.uid}'`;
+                res = await callGasApi({
+                    action: "update",
+                    table: "schedule_override",
+                    where: `uid = '${editingOverride.uid}'`,
+                    data: {
+                        override_date: inputDate,
+                        override_time: overrideData.override_time,
+                        max_capacity: overrideData.max_capacity,
+                        is_closed: tempIsClosed ? 1 : 0,
+                        update_at: now
+                    }
+                });
             } else {
-                sql = `INSERT INTO schedule_override (uid, schedule_menu_uid, override_date, override_time, max_capacity, is_closed, create_at, update_at) VALUES ('${targetUid}', '${id}', '${inputDate}', '${overrideData.override_time}', ${overrideData.max_capacity}, ${overrideData.is_closed}, '${now}', '${now}')`;
+                res = await callGasApi({
+                    action: "insert",
+                    table: "schedule_override",
+                    data: {
+                        uid: targetUidOverride,
+                        schedule_menu_uid: targetUid,
+                        override_date: inputDate,
+                        override_time: overrideData.override_time,
+                        max_capacity: overrideData.max_capacity,
+                        is_closed: tempIsClosed ? 1 : 0,
+                        create_at: now,
+                        update_at: now
+                    }
+                });
             }
 
-            const res = await executeNonQuery(sql);
-            if (res.success) {
+            if (res) {
                 if (editingOverride) {
                     setOverrides(prev => prev.map(o => o.uid === editingOverride.uid ? { ...o, ...overrideData, update_at: now } : o));
                 } else {
                     const newOverride: ScheduleOverride = {
-                        uid: targetUid,
-                        schedule_menu_uid: id || '',
+                        uid: targetUidOverride,
+                        schedule_menu_uid: targetUid,
                         override_date: inputDate,
                         override_time: overrideData.override_time || '09:00-18:00',
                         max_capacity: overrideData.max_capacity || 2,
-                        is_closed: overrideData.is_closed ?? false,
+                        is_closed: tempIsClosed,
                         create_at: now,
                         update_at: now
                     };
                     setOverrides(prev => [newOverride, ...prev]);
                 }
                 setIsModalOpen(false);
-                queryClient.invalidateQueries({ queryKey: ['schedule_menu', id] });
+                queryClient.invalidateQueries({ queryKey: ['schedule_menu', targetUid] });
             } else {
                 alert('儲存失敗');
             }
@@ -198,53 +245,65 @@ const ScheduleTimeEdit: React.FC = () => {
             setIsSavingOverride(false);
         }
     };
-
-    // ── 儲存 Mutation ──
     const saveMutation = useMutation({
         mutationFn: async () => {
-            const now = new Date().toISOString();
-            const sqls: string[] = [];
             const original = data || { menu: null, times: [], overrides: [] };
-
-            // 1. Template Name
-            if (name !== (original.menu?.name || '')) {
-                sqls.push(`UPDATE schedule_menu SET name = '${name.replace(/'/g, "''")}', update_at = '${now}' WHERE uid = '${id}'`);
-            }
-
-            // 2. Schedule Times
-            for (const uid of deletedUids) {
-                sqls.push(`DELETE FROM schedule_time WHERE uid = '${uid}'`);
-            }
-            for (const t of times) {
-                if (t.uid.startsWith('_new_')) {
-                    const realUid = generateUid();
-                    sqls.push(`INSERT INTO schedule_time (uid, schedule_menu_uid, time_range, day_of_week, max_capacity, is_open, is_open_last_booking_time, last_booking_time, create_at, update_at) VALUES ('${realUid}', '${id}', '${t.time_range}', ${t.day_of_week}, ${t.max_capacity}, ${t.is_open}, ${t.is_open_last_booking_time}, '${t.last_booking_time}', '${now}', '${now}')`);
-                } else {
+            
+            // ── 變動偵測 ──
+            const isNameChanged = name !== (original.menu?.name || '');
+            
+            // 這裡簡單化對比，若有新增或刪除或內容變化皆視為變動
+            const hasDeleted = deletedUids.length > 0;
+            const hasNew = times.some(t => t.uid.startsWith('_new_'));
+            
+            // 檢查是否有實質內容變化
+            let isDirty = isNameChanged || hasDeleted || hasNew;
+            if (!isDirty) {
+                // 深度檢查每個時段內容
+                for (const t of times) {
+                    if (t.uid.startsWith('_new_')) continue;
                     const orig = original.times.find(ot => ot.uid === t.uid);
-                    if (orig && (
-                        orig.time_range !== t.time_range ||
-                        orig.day_of_week !== t.day_of_week ||
-                        orig.max_capacity !== t.max_capacity ||
+                    if (!orig || 
+                        orig.time_range !== t.time_range || 
+                        orig.max_capacity !== t.max_capacity || 
                         Boolean(orig.is_open) !== Boolean(t.is_open) ||
-                        Boolean(orig.is_open_last_booking_time) !== Boolean(t.is_open_last_booking_time) ||
                         orig.last_booking_time !== t.last_booking_time
-                    )) {
-                        sqls.push(`UPDATE schedule_time SET time_range = '${t.time_range}', day_of_week = ${t.day_of_week}, max_capacity = ${t.max_capacity}, is_open = ${t.is_open}, is_open_last_booking_time = ${t.is_open_last_booking_time}, last_booking_time = '${t.last_booking_time}', update_at = '${now}' WHERE uid = '${t.uid}'`);
+                    ) {
+                        isDirty = true;
+                        break;
                     }
                 }
             }
 
-            // 3. Schedule Overrides
-            // 已改為即時處理，此處移除
+            if (!isDirty) return 'NO_CHANGES';
 
-            if (sqls.length === 0) {
-                return 'NO_CHANGES';
+            // ── 調用 Procedure ──
+            const savePayload = {
+                menu: {
+                    uid: targetUid,
+                    manager_uid: manager?.uid || '',
+                    name: name
+                },
+                times: times.map(t => ({
+                    ...t,
+                    uid: t.uid.startsWith('_new_') ? generateUid() : t.uid,
+                    schedule_menu_uid: targetUid,
+                    is_open: t.is_open ? 1 : 0,
+                    is_open_last_booking_time: t.is_open_last_booking_time ? 1 : 0
+                })),
+                deleted_time_uids: deletedUids
+            };
+
+            const res = await callGasApi({
+                action: 'call',
+                procedure: 'saveScheduleConfig',
+                params: [JSON.stringify(savePayload)]
+            });
+
+            if (!res || (res.result && !res.result.success)) {
+                 throw new Error(res?.result?.message || '儲存失敗');
             }
 
-            for (const sql of sqls) {
-                const res = await executeNonQuery(sql);
-                if (!res.success) throw new Error(res.message || '儲存失敗');
-            }
             return 'SUCCESS';
         },
         onSuccess: (result) => {
@@ -253,7 +312,7 @@ const ScheduleTimeEdit: React.FC = () => {
                 return;
             }
             queryClient.invalidateQueries({ queryKey: ['schedule_menus'] });
-            if (!isNew) queryClient.invalidateQueries({ queryKey: ['schedule_menu', id] });
+            queryClient.invalidateQueries({ queryKey: ['schedule_menu', targetUid] });
             navigate('/admin/schedule_time');
         },
         onError: (err: any) => alert(err.message),

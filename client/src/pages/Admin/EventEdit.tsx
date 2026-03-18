@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Save, Plus, Trash2, X, Clock, Mail, Phone, FileText, List, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { executeSQL, executeNonQuery } from '../../utils/database';
+import { callGasApi } from '../../utils/database';
 import { useAuth } from '../../utils/auth';
 import { QUERY_CONFIG } from '../../utils/constants';
 import type { EventData } from '../../types';
@@ -74,7 +74,11 @@ const EventEdit: React.FC = () => {
         queryKey: ['event', id],
         queryFn: async () => {
             if (id === 'new') return null;
-            const result = await executeSQL<EventData>(`SELECT * FROM event WHERE uid = '${id}' LIMIT 1`);
+            const result = await callGasApi<EventData[]>({
+                action: "select",
+                table: 'event',
+                where: `uid = '${id}' LIMIT 1`
+            });
             return result?.[0] || null;
         },
         enabled: id !== 'new',
@@ -87,7 +91,11 @@ const EventEdit: React.FC = () => {
         queryKey: ['schedule_menus', manager?.uid],
         queryFn: async () => {
             if (!manager?.uid) return [];
-            return await executeSQL<any>(`SELECT * FROM schedule_menu WHERE manager_uid = '${manager.uid}'`);
+            return await callGasApi<any[]>({
+                action: "select",
+                table: 'schedule_menu',
+                where: `manager_uid = '${manager.uid}'`
+            }) || [];
         },
         enabled: !!manager?.uid,
     });
@@ -132,27 +140,38 @@ const EventEdit: React.FC = () => {
                 }
             }
 
-            let sql = '';
             const now = new Date().toISOString();
+            const data: any = {
+                title: eventState.title,
+                logo_url: manager?.logo_url,
+                description: eventState.description,
+                is_phone_required: eventState.is_phone_required ? 1 : 0,
+                is_email_required: eventState.is_email_required ? 1 : 0,
+                website_name: manager?.website_name,
+                booking_dynamic_url: eventState.booking_dynamic_url,
+                options: menuJson,
+                schedule_menu_uid: hoursJson,
+                update_at: now
+            };
+
+            let result;
             if (id === 'new') {
-                sql = `INSERT INTO event (uid, manager_uid, title, logo_url, description, is_phone_required, is_email_required, booking_dynamic_url, options, schedule_menu_uid, create_at, update_at) 
-                       VALUES ('${uid}', '${manager?.uid}', '${eventState.title}','${manager?.logo_url}', '${eventState.description}', ${eventState.is_phone_required}, ${eventState.is_email_required}, '/${manager?.website_name}/${eventState.booking_dynamic_url}', '${menuJson}', '${hoursJson}', '${now}', '${now}')`;
+                data.uid = uid;
+                data.manager_uid = manager?.uid;
+                data.create_at = now;
+                // 注意：這裡的路徑生成邏輯保持不變
+                data.booking_dynamic_url = `/${manager?.website_name}/${eventState.booking_dynamic_url}`;
+                result = await callGasApi({ action: "insert", table: "event", data });
             } else {
-                sql = `UPDATE event SET 
-                       title = '${eventState.title}', 
-                       logo_url = '${manager?.logo_url}', 
-                       description = '${eventState.description}', 
-                       is_phone_required = ${eventState.is_phone_required}, 
-                       is_email_required = ${eventState.is_email_required}, 
-                       website_name = '${manager?.website_name}',
-                       booking_dynamic_url = '${eventState.booking_dynamic_url}',
-                       options = '${menuJson}', 
-                       schedule_menu_uid = '${hoursJson}', 
-                       update_at = '${now}' 
-                       WHERE uid = '${id}'`;
+                result = await callGasApi({
+                    action: "update",
+                    table: "event",
+                    where: `uid = '${id}'`,
+                    data
+                });
             }
-            const result = await executeNonQuery(sql);
-            if (!result.success) throw new Error(result.message || '儲存失敗');
+
+            if (!result) throw new Error('儲存失敗');
             return 'UPDATED';
         },
         onSuccess: (result) => {
@@ -172,8 +191,12 @@ const EventEdit: React.FC = () => {
     const deleteMutation = useMutation({
         mutationFn: async () => {
             if (!confirm('確定要刪除此活動嗎？此操作不可恢復。')) return;
-            const result = await executeNonQuery(`DELETE FROM event WHERE uid = '${id}'`);
-            if (!result.success) throw new Error(result.message || '刪除失敗');
+            const result = await callGasApi({
+                action: "delete",
+                table: "event",
+                where: `uid = '${id}'`
+            });
+            if (!result) throw new Error('刪除失敗');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['events_and_menus'] });

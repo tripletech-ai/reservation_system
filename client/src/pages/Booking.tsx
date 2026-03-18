@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar as CalendarIcon, Clock, User, Phone, Mail, ChevronRight, ChevronLeft, CheckCircle2, Loader2, Edit, ChevronDown, Check } from 'lucide-react';
-import { executeNonQuery, executeSQL } from '../utils/database';
-import type { EventData, ScheduleTime, ScheduleOverride } from '../types';
+import { callGasApi } from '../utils/database';
+import type { EventData, ScheduleTime, ScheduleOverride, BookingCache } from '../types';
 import { generateUid } from '../utils/id';
 import { TIME_SLOT_INTERVAL } from '../utils/constants';
 
@@ -27,7 +27,6 @@ const Booking: React.FC = () => {
     const pathParts = fullUrlPath.split('/').filter(Boolean);
     const websiteNameFromUrl = pathParts[0] || '';
     const dynamicUrlFromUrl = pathParts[1] || '';
-    const scheduleMenuUidFromUrl = queryParams.get('schedule_menu_uid');
     const lineUidFromUrl = queryParams.get('line_uid');
 
     // ── State ──────────────────────────────────────────────────────────────────
@@ -86,39 +85,25 @@ const Booking: React.FC = () => {
 
     // ── Queries ────────────────────────────────────────────────────────────────
 
-    const { data: event, isLoading: isEventLoading } = useQuery({
-        queryKey: ['booking_event', websiteNameFromUrl, dynamicUrlFromUrl],
+    const { data: memberEventInfo, isLoading: isEventLoading } = useQuery({
+        queryKey: ['booking_member_event', lineUidFromUrl, dynamicUrlFromUrl, websiteNameFromUrl],
         queryFn: async () => {
-            const sql = `SELECT * FROM event WHERE website_name = '${websiteNameFromUrl}' AND booking_dynamic_url = '${dynamicUrlFromUrl}' LIMIT 1`;
-            const result = await executeSQL(sql);
-            return (result[0] as EventData) || null;
+            const res = await callGasApi<any>({
+                action: 'call',
+                procedure: 'getMemberEventInfo',
+                params: [lineUidFromUrl || '', dynamicUrlFromUrl || '', websiteNameFromUrl || '']
+            });
+            return res?.result || null;
         },
         enabled: !!websiteNameFromUrl && !!dynamicUrlFromUrl
     });
 
-    const { data: scheduleData } = useQuery({
-        queryKey: ['booking_schedule', event?.schedule_menu_uid],
-        queryFn: async () => {
-            if (!event?.schedule_menu_uid) return null;
-            let menuUids: string[] = [];
-            try {
-                menuUids = JSON.parse(event.schedule_menu_uid);
-            } catch {
-                menuUids = [event.schedule_menu_uid];
-            }
-
-            const targetUid = scheduleMenuUidFromUrl || menuUids[0];
-            const [times, overrides] = await Promise.all([
-                executeSQL(`SELECT * FROM schedule_time WHERE schedule_menu_uid = '${targetUid}'`),
-                executeSQL(`SELECT * FROM schedule_override WHERE schedule_menu_uid = '${targetUid}'`)
-            ]);
-            return {
-                times: times as ScheduleTime[],
-                overrides: overrides as ScheduleOverride[]
-            };
-        },
-        enabled: !!event
-    });
+    const event = memberEventInfo?.data?.event as EventData | null | undefined;
+    const scheduleData = memberEventInfo ? {
+        times: (memberEventInfo.data?.schedule_time || []) as ScheduleTime[],
+        overrides: (memberEventInfo.data?.schedule_override || []) as ScheduleOverride[]
+    } : undefined;
+    const bookingCache = (memberEventInfo?.data?.booking_cache || []) as BookingCache[];
 
     // 這裡要注意：目前的 executeSQL 回傳的是陣列，若是 INSERT 則由後端 GAS 處理
     // 為了保險起見，我們改用 executeNonQuery (如果後端有支援)
@@ -155,16 +140,18 @@ const Booking: React.FC = () => {
             max_capacity_array
         };
         setSlotTime(`${startTimePart}-${minutesToTime(endMinutes)} (${computedDuration}分鐘)`);
-        const sql = `CALL submitBooking('${JSON.stringify(bookingData).replace(/'/g, "''")}')`;
-
         setIsSubmitting(true);
         try {
-            const result = await executeNonQuery(sql);
+            const result = await callGasApi({
+                action: "call",
+                procedure: "submitBooking",
+                params: [JSON.stringify(bookingData)]
+            });
 
-            if (result.success) {
+            if (result && (result.success || result.result?.success)) {
                 setStep(3); // 成功後才切換
             } else {
-                alert(result.message || "預約失敗，請檢查網路連線或稍後再試。");
+                alert((result?.message || result?.result?.message) || "預約失敗，請檢查網路連線或稍後再試。");
             }
         } catch (error) {
             console.error("Booking Submit Failed:", error);
@@ -234,7 +221,7 @@ const Booking: React.FC = () => {
         if (activeRules.length === 0) return [];
 
         // 2. 進行時段切分與容量合併 (每 30 分鐘一格)
-        const slots: { uid: string, time_range: string, max_capacity: number }[] = [];
+        const slots: { uid: string, time_range: string, max_capacity: number, available_capacity: number }[] = [];
 
         // 從最早開始到最晚結束
         const minStart = Math.min(...activeRules.map(r => r.start));
@@ -253,11 +240,20 @@ const Booking: React.FC = () => {
             }
 
             if (bestCap > 0) {
-                slots.push({
-                    uid: `${dateStr}_${minutesToTime(time)}`,
-                    time_range: `${minutesToTime(time)}-${minutesToTime(time + 30)}`,
-                    max_capacity: bestCap
-                });
+                const slotStartStr = `${dateStr} ${minutesToTime(time)}`;
+                // 找尋 bookingCache 中有沒有這個起點時間的紀錄，因為 GAS 可能回傳結尾多了 :00 或沒有，作模糊比對
+                const cached = bookingCache.find(bc => bc.booking_start_time.startsWith(slotStartStr));
+                const bookedCount = cached ? Number(cached.booked_count) : 0;
+                const available = bestCap - bookedCount;
+
+                if (available > 0) {
+                    slots.push({
+                        uid: `${dateStr}_${minutesToTime(time)}`,
+                        time_range: `${minutesToTime(time)}-${minutesToTime(time + 30)}`,
+                        max_capacity: bestCap,
+                        available_capacity: available
+                    });
+                }
             }
         }
 

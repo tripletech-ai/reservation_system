@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, X, Mail, Calendar, ShieldCheck, Phone, MapPin, Power, Loader2, RefreshCcw, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { executeSQL, executeNonQuery } from '../../utils/database';
+import { callGasApi } from '../../utils/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Member } from '../../types';
 import { useAuth } from '../../utils/auth';
@@ -28,8 +28,12 @@ const Members: React.FC = () => {
     } = useQuery({
         queryKey: ['members'],
         queryFn: async () => {
-            const result = await executeSQL<Member>(`SELECT * FROM member WHERE manager_uid = '${manager.uid}' ORDER BY create_at DESC`);
-            return result;
+            const result = await callGasApi<Member[]>({
+                action: "select",
+                table: 'member',
+                where: `manager_uid = '${manager.uid}' ORDER BY create_at DESC`
+            });
+            return result || [];
         },
         staleTime: 1000 * 60 * 5,
     });
@@ -39,7 +43,12 @@ const Members: React.FC = () => {
     // 使用 Mutation 處理狀態更新
     const toggleStatusMutation = useMutation({
         mutationFn: async ({ uid, newStatus }: { uid: string, newStatus: number }) => {
-            const success = await executeNonQuery(`UPDATE member SET status = ${newStatus} WHERE uid = '${uid}'`);
+            const success = await callGasApi({
+                action: "update",
+                table: "member",
+                where: `uid = '${uid}'`,
+                data: { status: newStatus }
+            });
             if (!success) throw new Error('更新失敗');
             return { uid, newStatus };
         },
@@ -350,8 +359,8 @@ const Members: React.FC = () => {
                             <button
                                 className="primary"
                                 style={{
-                                    background: selectedMember.status === 0 ? '#f1f5f9' : 'var(--primary-gradient)',
-                                    color: selectedMember.status === 0 ? '#475569' : 'white',
+                                    background: selectedMember.status === 1 ? '#f1f5f9' : 'var(--primary-gradient)',
+                                    color: selectedMember.status === 1 ? '#475569' : 'white',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '0.5rem'
@@ -359,7 +368,7 @@ const Members: React.FC = () => {
                                 onClick={() => toggleStatus(selectedMember.uid)}
                             >
                                 <Power size={16} />
-                                {selectedMember.status === 0 ? '切換為休眠' : '切換為活躍'}
+                                {selectedMember.status === 1 ? '切換為休眠' : '切換為活躍'}
                             </button>
                         </div>
                     </div>

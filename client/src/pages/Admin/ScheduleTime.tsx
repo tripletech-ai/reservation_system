@@ -2,9 +2,8 @@ import React from 'react';
 import { Clock, Plus, RefreshCcw, Loader2, ChevronLeft, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { executeSQL, executeNonQuery } from '../../utils/database';
+import { callGasApi } from '../../utils/database';
 import { useAuth } from '../../utils/auth';
-import { generateUid } from '../../utils/id';
 import type { ScheduleMenu, ScheduleTime, ScheduleMenuWithTimes } from '../../types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -32,43 +31,25 @@ const ScheduleTime: React.FC = () => {
     } = useQuery({
         queryKey: ['schedule_menus'],
         queryFn: async (): Promise<ScheduleMenuWithTimes[]> => {
-            const [menus, times] = await Promise.all([
-                executeSQL<ScheduleMenu>(`SELECT * FROM schedule_menu WHERE manager_uid = '${manager?.uid}' ORDER BY create_at DESC`),
-                executeSQL<ScheduleTime>('SELECT * FROM schedule_time ORDER BY day_of_week ASC'),
-            ]);
-            return menus.map((menu) => ({
+
+
+            const res = await callGasApi<{ menus: ScheduleMenu[]; times: ScheduleTime[] }>({
+                action: 'call',
+                procedure: 'getManagerScheduleConfig',
+                params: [manager?.uid]
+            });
+
+            const finalMenus = res?.menus || [];
+            const finalTimes = res?.times || [];
+
+            return finalMenus.map((menu) => ({
                 ...menu,
-                times: times.filter((t) => t.schedule_menu_uid === menu.uid),
+                times: finalTimes.filter((t: ScheduleTime) => t.schedule_menu_uid === menu.uid),
             }));
         },
         staleTime: 1000 * 60 * 5,
     });
 
-    const createMutation = useMutation({
-        mutationFn: async () => {
-            const now = new Date().toISOString();
-            const uid = generateUid();
-            const menuData: ScheduleMenu = {
-                uid,
-                manager_uid: manager?.uid || '',
-                name: '未命名模板',
-                create_at: now,
-                update_at: now
-            };
-
-            const ok = await executeNonQuery(
-                `INSERT INTO schedule_menu (uid, manager_uid, name, create_at, update_at) 
-                 VALUES ('${uid}', '${menuData.manager_uid}', '${menuData.name}', '${now}', '${now}')`
-            );
-            if (!ok) throw new Error('新增失敗');
-            return { menu: menuData, times: [], overrides: [] };
-        },
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ['schedule_menus'] });
-            navigate(`/admin/schedule_time/${data.menu.uid}`, { state: { initialData: data } });
-        },
-        onError: (err: any) => alert(err.message),
-    });
 
     const deleteMutation = useMutation({
         mutationFn: async (uid: string) => {
@@ -77,12 +58,12 @@ const ScheduleTime: React.FC = () => {
 
             // 依照關聯性刪除
             const results = await Promise.all([
-                executeNonQuery(`DELETE FROM schedule_time WHERE schedule_menu_uid = '${uid}'`),
-                executeNonQuery(`DELETE FROM schedule_override WHERE schedule_menu_uid = '${uid}'`),
-                executeNonQuery(`DELETE FROM schedule_menu WHERE uid = '${uid}'`),
+                callGasApi({ action: "delete", table: "schedule_time", where: `schedule_menu_uid = '${uid}'` }),
+                callGasApi({ action: "delete", table: "schedule_override", where: `schedule_menu_uid = '${uid}'` }),
+                callGasApi({ action: "delete", table: "schedule_menu", where: `uid = '${uid}'` }),
             ]);
 
-            if (results.some(r => !r)) throw new Error('部分資料刪除失敗');
+            if (results.some(r => r === null)) throw new Error('部分資料刪除失敗');
             return true;
         },
         onSuccess: async (ok) => {
@@ -120,11 +101,10 @@ const ScheduleTime: React.FC = () => {
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button
                         className="primary"
-                        disabled={createMutation.isPending}
-                        style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content', opacity: createMutation.isPending ? 0.7 : 1 }}
-                        onClick={() => createMutation.mutate()}
+                        style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}
+                        onClick={() => navigate('/admin/schedule_time/new')}
                     >
-                        {createMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                        <Plus size={18} />
                         新增時程
                     </button>
                     <button
@@ -161,7 +141,7 @@ const ScheduleTime: React.FC = () => {
                             key={menu.uid}
                             className="admin-card"
                             style={{ cursor: 'pointer', padding: '0.75rem', display: 'flex', flexDirection: 'column' }}
-                            onClick={() => navigate(`/admin/schedule_time/${menu.uid}`)}
+                            onClick={() => navigate(`/admin/schedule_time/${menu.uid}`, { state: { initialData: { menu, times: menu.times, overrides: [] } } })}
                         >
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#09090b', marginBottom: '0.375rem' }}>{menu.name}</h3>

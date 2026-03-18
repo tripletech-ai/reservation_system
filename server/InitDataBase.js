@@ -3,14 +3,15 @@
  */
 function initAllTables() {
     initManagerTable();
-    initUserTable();
-    initBookingTable();
-    initBookingCacheTable();
+    initMemberTable();
+    initScheduleMenuTable();
     initScheduleHoursTable();
     initScheduleOverrideTable();
     initEventTable();
+    initBookingTable();
+    initBookingCacheTable();
     initLogTable();
-    initScheduleMenuTable();
+
 }
 
 /**
@@ -22,28 +23,24 @@ function createTableIfNotExists(tableName, headers) {
 
     if (!sheet) {
         sheet = ss.insertSheet(tableName);
-        // 寫入標題欄
         sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-        // 凍結第一列標題
         sheet.setFrozenRows(1);
-        console.log(`Table "${tableName}" created successfully.`);
+        console.log(`✅ [NEW] 資料表 "${tableName}" 已建立成功。`);
     } else {
-        console.log(`Table "${tableName}" already exists. Syncing columns...`);
-        // 取得現有標題
-        const currentHeaders = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
-
-        // 1. 新增缺失欄位
-        const missingHeaders = headers.filter(h => !currentHeaders.includes(h));
-        if (missingHeaders.length > 0) {
-            const nextCol = sheet.getLastColumn() + 1;
-            sheet.getRange(1, nextCol, 1, missingHeaders.length).setValues([missingHeaders]);
-            console.log(`Updated "${tableName}": Added columns [${missingHeaders.join(', ')}]`);
-        }
-
-        // 2. 標記多餘欄位 (不主動刪除資料，僅在 console 提醒或改名)
-        const extraHeaders = currentHeaders.filter(h => h && !headers.includes(h));
-        if (extraHeaders.length > 0) {
-            console.warn(`Table "${tableName}" has extra columns: [${extraHeaders.join(', ')}]`);
+        const currentHeaders = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0].map(h => String(h).trim());
+        
+        // 如果標頭順序不完全一致，強制同步標頭
+        if (currentHeaders.join(',') !== headers.join(',')) {
+            console.warn(`⚠️ [SYNC] 資料表 "${tableName}" 順序不符，正在重整標頭...`);
+            // 只更新第一列標頭，保留下方資料
+            sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+            
+            // 如果列數不足，補齊
+            if (sheet.getMaxColumns() < headers.length) {
+                sheet.insertColumnsAfter(sheet.getMaxColumns(), headers.length - sheet.getMaxColumns());
+            }
+        } else {
+            console.log(`ℹ️ [SKIP] 資料表 "${tableName}" 已與定義同步。`);
         }
     }
     return sheet;
@@ -87,7 +84,7 @@ function initManagerTable() {
 /**
  * 建立使用者資料表 (user)
  */
-function initUserTable() {
+function initMemberTable() {
     const headers = [
         'uid',
         'manager_uid',

@@ -1,174 +1,120 @@
 /**
  * 建立完整關連性的測試假資料
- * 包含：Manager, Member, ScheduleMenu, ScheduleTimes, Event, ScheduleOverride, Booking
+ * 改為使用 doPost 路由方式，驗證 Code.js 與 DatabaseEngine.js 的整合
  */
 function seedAllData() {
-    console.log('🚀 開始插入完整關聯測試資料...');
+    console.log('🚀 開始執行整合後的 SeedData (模擬 POST 路由)...');
 
-    // 1. 定義常數與格式設定
-    const now = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const dateStr = Utilities.formatDate(tomorrow, 'GMT+8', 'yyyy-MM-dd');
 
-    // 2. 清除舊資料
+    // 1. 清除舊資料 (直接調用清空)
     clearAllData();
 
-    // 3. 建立管理者 (Managers)
+    // 2. 建立管理者 (保持型別正確)
     const questDef = [
-        {
-            title: "身體評估",
-            options: [{ title: "正常" }, { title: "過敏" }, { title: "肌肉緊繃" }, { title: "受傷中" }]
-        },
-        {
-            title: "偏好力道",
-            options: [{ title: "強" }, { title: "中" }, { title: "輕" }]
-        }
+        { title: "身體評估", options: [{ title: "正常" }, { title: "過敏" }] },
+        { title: "偏好力道", options: [{ title: "強" }, { title: "中" }] }
     ];
-    const questStr = JSON.stringify(questDef).replace(/'/g, "''");
 
     const managers = [
-        { uid: 'MGR_001', account: 'admin', name: '靜心紓壓館 (旗艦店)' },
-        { uid: 'MGR_002', account: 'manager_b', name: '樂活美學中心 (二號店)' }
+        { uid: 'MGR_001', account: 'admin', name: '店長 A', password: 'admin', logo_url: 'hnp.png' },
+        { uid: 'MGR_002', account: 'manager_b', name: '店長 B', password: 'password123', logo_url: 'hnp.png' }
     ];
 
     managers.forEach(m => {
-        Database.query(`INSERT INTO manager (
-            uid, account, password, logo_url, website_name, bank_name, bank_account, bank_account_owner, questionnaire
-        ) VALUES (
-            '${m.uid}', '${m.account}', 'admin123', 'hnp.png', '${m.name}', '國泰世華', '123-456-789', '負責人', '${questStr}'
-        )`);
+        mockPost({
+            action: 'insert',
+            table: 'manager',
+            data: {
+                uid: m.uid,
+                account: m.account,
+                password: m.password,
+                website_name: m.name,
+                questionnaire: JSON.stringify(questDef),
+                logo_url: m.logo_url
+            }
+        });
+        console.log(`✅ [INSERT] Manager ${m.uid} OK`);
     });
-    console.log('✅ Managers 插入完成');
 
-    // 4. 建立營業選單 (Schedule Menu)
-    const menus = [
-        { uid: 'MENU_001', mgr_uid: 'MGR_001', name: '旗艦店-正常營業' },
-        { uid: 'MENU_002', mgr_uid: 'MGR_002', name: '二號店-全日營業' }
+    // 3. 批次建立會員 (保持數字 status)
+    const membersData = [
+        { uid: 'U_001', manager_uid: 'MGR_001', name: '測試會員 A', line_uid: 'L_01', phone: '0911', status: 1 },
+        { uid: 'U_002', manager_uid: 'MGR_001', name: '測試會員 B', line_uid: 'L_02', phone: '0922', status: 1 },
+        { uid: 'U_003', manager_uid: 'MGR_001', name: '測試會員 C', line_uid: 'L_03', phone: '0933', status: 0 }
     ];
-    menus.forEach(m => {
-        Database.query(`INSERT INTO schedule_menu (uid, manager_uid, name) VALUES ('${m.uid}', '${m.mgr_uid}', '${m.name}')`);
+    
+    const resBatch = mockPost({
+        action: 'insert',
+        table: 'member',
+        data: membersData
     });
-    console.log('✅ Schedule Menus 插入完成');
+    console.log(`✅ [BATCH INSERT] Members count: ${resBatch.data ? resBatch.data.count : 0}`);
 
-    // 5. 建立營業時段 (Schedule Times)
-    const times = [
-        // MGR_001 - 平日
-        { uid: 'T_001', menu: 'MENU_001', day: '1,2,3,4,5', range: '10:00-20:00', max: '3' },
-        // MGR_001 - 週末
-        { uid: 'T_002', menu: 'MENU_001', day: '6,0', range: '11:00-18:00', max: '2' },
-        // MGR_002 - 全天候
-        { uid: 'T_003', menu: 'MENU_002', day: '1,2,3,4,5,6,0', range: '09:00-21:00', max: '5' }
-    ];
-    times.forEach(t => {
-        Database.query(`INSERT INTO schedule_times (
-            uid, schedule_menu_uid, day_of_week, time_range, max_capacity, is_open
-        ) VALUES (
-            '${t.uid}', '${t.menu}', '${t.day}', '${t.range}', '${t.max}', 'true'
-        )`);
-    });
-    console.log('✅ Schedule Times 插入完成');
+    console.log('✨ SeedData 初始化完成！');
+}
 
-    // 6. 建立預約活動 (Event)
-    const eventOptions = {
-        name: '服務選單',
-        items: [
-            { title: '全身油壓放鬆', duration: 60 },
-            { title: '深層肌肉修復', duration: 90 },
-            { title: '足底經絡按摩', duration: 45 }
-        ]
+/**
+ * 模擬前端呼叫 doPost
+ */
+function mockPost(payload) {
+    const e = {
+        postData: {
+            contents: JSON.stringify(payload)
+        }
     };
-    const optStr = JSON.stringify(eventOptions).replace(/'/g, "''");
+    const response = doPost(e);
+    return JSON.parse(response.getContent());
+}
 
-    const events = [
-        { uid: 'E_001', mgr: 'MGR_001', title: '頂級舒壓專案', menu: 'MENU_001' },
-        { uid: 'E_002', mgr: 'MGR_002', title: '快速充電專案', menu: 'MENU_002' }
-    ];
-    events.forEach(e => {
-        Database.query(`INSERT INTO event (
-            uid, manager_uid, title, description, options, business_hours_ids, is_phone_required
-        ) VALUES (
-            '${e.uid}', '${e.mgr}', '${e.title}', '專業技師服務', '${optStr}', '${e.menu}', 'true'
-        )`);
+/**
+ * 整合效能驗證：驗證新 SQL 引擎的 Gviz SELECT 與 批次 UPDATE
+ */
+function runFrontendIntegrationTest() {
+    console.log('🧪 執行效能整合驗證...');
+
+    // (A) 高效 SELECT (只要傳入 SQL 即可)
+    const resSelect = mockPost({
+        action: 'select',
+        sql: "SELECT uid, name FROM member WHERE manager_uid = 'MGR_001' ORDER BY uid DESC"
     });
-    console.log('✅ Events 插入完成');
+    console.log(`📡 [POST SELECT] 成員數: ${resSelect.data ? resSelect.data.length : 0}`);
 
-    // 7. 建立會員 (Member)
-    const members = [
-        { uid: 'U_001', mgr: 'MGR_001', name: '王小華', luid: 'line_w_01', phone: '0912111222' },
-        { uid: 'U_002', mgr: 'MGR_001', name: '李阿美', luid: 'line_l_02', phone: '0922333444' },
-        { uid: 'U_003', mgr: 'MGR_002', name: '張大名', luid: 'line_z_03', phone: '0933555666' }
-    ];
-    members.forEach(m => {
-        Database.query(`INSERT INTO member (
-            uid, manager_uid, name, line_uid, phone, email, questionnaire, status
-        ) VALUES (
-            '${m.uid}', '${m.mgr}', '${m.name}', '${m.luid}', '${m.phone}', 'user@example.com', '正常,強', '1'
-        )`);
+    // (B) 批次 UPDATE (Action = update)
+    const resUpdate = mockPost({
+        action: 'update',
+        table: 'member',
+        data: { status: 2 },
+        where: "status = 1"
     });
-    console.log('✅ Members 插入完成');
+    console.log(`🔄 [POST UPDATE] 成功批次更新筆數: ${resUpdate.data ? resUpdate.data.updatedCount : 0}`);
 
-    // 8. 建立預約記錄 (Booking)
-    const bookings = [
-        { uid: 'B_001', mgr: 'MGR_001', member: members[0], start: '10:00', end: '11:00' },
-        { uid: 'B_002', mgr: 'MGR_002', member: members[2], start: '14:00', end: '14:45' }
-    ];
-    bookings.forEach(b => {
-        Database.query(`INSERT INTO booking (
-            uid, manager_uid, name, line_uid, phone, booking_start_time, booking_end_time, service_id, is_deposit_received, is_cancelled
-        ) VALUES (
-            '${b.uid}', '${b.mgr}', '${b.member.name}', '${b.member.luid}', '${b.member.phone}', '${dateStr}T${b.start}:00', '${dateStr}T${b.end}:00', '全身油壓放鬆', 'true', 'false'
-        )`);
+    // (C) 驗證 Action = query (直接跑 SQL)
+    const resQuery = mockPost({
+        action: 'query',
+        sql: "SELECT COUNT(*) as active_count FROM member WHERE status = 2"
     });
-    console.log('✅ Bookings 插入完成');
-
-    // 9. 覆蓋日程 (Schedule Override)
-    Database.query(`INSERT INTO schedule_override (
-        uid, schedule_menu_uid, override_date, override_time, max_capacity, is_closed
-    ) VALUES (
-        'OV_001', 'MENU_001', '2026-05-01', '00:00-23:59', '0', 'true'
-    )`);
-    // 10. 測試 Procedure (使用 SQL CALL 方式)
-    const testBookingData = {
-        manager_uid: 'MGR_001',
-        name: '測試預存程序-CALL',
-        line_uid: 'line_call_888',
-        phone: '0988888888',
-        booking_start_time: `20263-03-20 16:00`,
-        booking_end_time: `20263-03-20 18:00`,
-        service_item: 'SQL CALL 測試 115',
-        service_computed_duration: 120,
-        is_deposit_received: false
-    };
-
-    // 透過 SQL 語法呼叫，將物件轉為 JSON 字串傳入
-    const dataStr = JSON.stringify(testBookingData).replace(/'/g, "''");
-    Database.query(`CALL submitBooking('${dataStr}')`);
-    console.log('✅ SQL CALL submitBooking 測試完成');
-
-    console.log('✨ 測試資料插入作業全部結束！');
+    console.log(`🔍 [POST QUERY] Active 人數統計: ${JSON.stringify(resQuery.data)}`);
 }
 
 /**
  * 清空所有相關資料表
  */
 function clearAllData() {
-    const tables = [
-        'manager',
-        'member',
-        'booking',
-        'schedule_times',
-        'schedule_menu',
-        'schedule_override',
-        'event',
-        'logs'
-    ];
+    const tables = ['manager', 'member', 'booking', 'schedule_times', 'schedule_menu', 'schedule_override', 'event', 'logs', 'booking_cache'];
     const ss = getSpreadsheetApp();
     tables.forEach(name => {
         const sheet = ss.getSheetByName(name);
         if (sheet && sheet.getLastRow() > 1) {
-            sheet.deleteRows(2, sheet.getLastRow() - 1);
-            console.log(`掃除中: 已清空表: ${name}`);
+            // 安全做法：先清空內容
+            sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
+            // 如果行數太多，刪除多餘的行（至少保留兩行以策安全）
+            if (sheet.getMaxRows() > 2) {
+                sheet.deleteRows(2, sheet.getMaxRows() - 2);
+            }
+            console.log(`掃除中: ${name}`);
         }
     });
 }

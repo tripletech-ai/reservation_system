@@ -10,15 +10,15 @@
 function submitBooking(data) {
     // 1. 先解析資料 (如果是字串) 以取得 manager_uid
     if (typeof data === 'string') {
-        try { data = JSON.parse(data); } catch (e) {}
+        try { data = JSON.parse(data); } catch (e) { }
     }
-    
+
     const managerUid = data.manager_uid || 'unknown';
     const lockKey = 'lock_mgr_' + managerUid;
     const projectLock = LockService.getScriptLock();
     const cache = CacheService.getScriptCache();
     let isLocked = false;
-    
+
     try {
         // 2. 具名鎖定邏輯：當 manager_uid 一樣時才互斥
         // 透過全域鎖快速檢查並標記 Cache，實現分區並行
@@ -41,28 +41,20 @@ function submitBooking(data) {
 
         if (!isLocked) throw new Error('伺服器忙碌中 (Manager Lock Timeout)');
 
-        // 3. 儲存預約主表資料
-        const insertBookingSql = `
-            INSERT INTO booking (
-                uid, manager_uid, name, line_uid, phone, 
-                booking_start_time, booking_end_time, 
-                service_item, service_computed_duration, 
-                is_deposit_received, is_cancelled
-            ) VALUES (
-                '${data.uid}', 
-                '${data.manager_uid}', 
-                '${data.name}', 
-                '${data.line_uid}', 
-                '${data.phone}', 
-                '${data.booking_start_time}', 
-                '${data.booking_end_time}', 
-                '${data.service_item}', 
-                ${data.service_computed_duration || 60}, 
-                ${data.is_deposit_received || false}, 
-                false
-            )
-        `;
-        Database.query(insertBookingSql);
+        // 3. 儲存預約主表資料 (使用全新安全的 insert 方法)
+        Database.insert('booking', {
+            uid: data.uid,
+            manager_uid: data.manager_uid,
+            name: data.name,
+            line_uid: data.line_uid,
+            phone: data.phone,
+            booking_start_time: data.booking_start_time,
+            booking_end_time: data.booking_end_time,
+            service_item: data.service_item,
+            service_computed_duration: data.service_computed_duration || 60,
+            is_deposit_received: data.is_deposit_received || false,
+            is_cancelled: false
+        });
 
         // 4. 更新預約快取表 (booking_cache)
         const startDate = new Date(data.booking_start_time.replace(/-/g, '/'));
@@ -74,12 +66,7 @@ function submitBooking(data) {
         let currentIndex = 0;
         while (currentSlot <= endDate) {
             const slotStr = Utilities.formatDate(currentSlot, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
-            const checkCacheSql = `
-                SELECT uid, booked_count 
-                FROM booking_cache 
-                WHERE manager_uid = '${data.manager_uid}' 
-                  AND booking_start_time = '${slotStr}'
-            `;
+            const checkCacheSql = `SELECT uid, booked_count FROM booking_cache WHERE manager_uid = '${data.manager_uid}' AND booking_start_time = '${slotStr}'`;
             const value = Database.query(checkCacheSql);
 
             if (value && value.length > 0) {
@@ -95,18 +82,21 @@ function submitBooking(data) {
             currentIndex++;
         }
 
+        // 5. 批次更新或建立快取 (使用物件導向更新方法)
         taskList.forEach(task => {
             const value = task.data;
             if (value && value.length > 0) {
                 const record = value[0];
                 const nextCount = (Number(record.booked_count) || 0) + 1;
-                Database.query(`UPDATE booking_cache SET booked_count = ${nextCount} WHERE uid = '${record.uid}'`);
+                Database.update('booking_cache', { booked_count: nextCount }, `uid = '${record.uid}'`);
             } else {
                 const cacheUid = Utilities.getUuid();
-                Database.query(`
-                    INSERT INTO booking_cache (uid, manager_uid, booking_start_time, booked_count) 
-                    VALUES ('${cacheUid}', '${data.manager_uid}', '${task.slot}', 1)
-                `);
+                Database.insert('booking_cache', {
+                    uid: cacheUid,
+                    manager_uid: data.manager_uid,
+                    booking_start_time: task.slot,
+                    booked_count: 1
+                });
             }
         });
 
@@ -118,5 +108,156 @@ function submitBooking(data) {
     } finally {
         // 5. 釋放具名鎖
         if (isLocked) cache.remove(lockKey);
+    }
+}
+
+/**
+ * 腳本 2：根據 manager_uid 取得完整的排班配置 (Menu + Time Slots)
+ * 
+ * @param {string} managerUid 管理員唯一識別碼
+ * @returns {Object} 包含 menus 與 times 陣列的結果
+ */
+function getManagerScheduleConfig(managerUid) {
+    if (!managerUid) throw new Error("必須提供 manager_uid");
+
+    console.log(`🔍 [PROC] 正在讀取管理員 ${managerUid} 的排班配置...`);
+
+    // 分別查詢選單與時段
+    const menus = Database.query(`SELECT * FROM schedule_menu WHERE manager_uid = '${managerUid}' ORDER BY create_at DESC`);
+    const times = Database.query(`SELECT * FROM schedule_time WHERE manager_uid = '${managerUid}' ORDER BY day_of_week ASC`);
+
+    return {
+        success: true,
+        manager_uid: managerUid,
+        menus: menus || [],
+        times: times || []
+    };
+}
+
+/**
+ * 腳本 3：同步儲存或更新排班配置 (Menu + Time Slots)
+ * 解決「存入新排班」與「更新舊排班」的混合場景
+ * 
+ * @param {Object} config 包含 menu 與 times 的配置物件
+ * @returns {Object} 執行結果
+ */
+function saveScheduleConfig(config) {
+    const { menu, times } = config;
+    if (!menu || !menu.uid || !menu.manager_uid) {
+        throw new Error("必須提供 menu、menu.uid 與 menu.manager_uid");
+    }
+
+    const start = Date.now();
+    console.log(`💾 [PROC] 正在處理排班配置: ${menu.name || '未命名'} (UID: ${menu.uid})...`);
+
+    // 1. 【UPSERT Menu】 判斷是否存在，存在則更新所有欄位，不存在則插入
+    const checkMenu = Database.query(`SELECT uid FROM schedule_menu WHERE uid = '${menu.uid}'`);
+    if (checkMenu && checkMenu.length > 0) {
+        const updateData = { ...menu };
+        delete updateData.uid; // 不更新主鍵
+        Database.update('schedule_menu', updateData, `uid = '${menu.uid}'`);
+        console.log(`- 已更新 Menu [${menu.uid}]`);
+    } else {
+        Database.insert('schedule_menu', menu);
+        console.log(`- 已建立新 Menu [${menu.uid}]`);
+    }
+
+    // 2. 【Hard Sync Times】 清除該菜單舊的所有時段，並重新寫入，確保與前端順序一致
+    Database.delete('schedule_time', `schedule_menu_uid = '${menu.uid}'`);
+
+    if (times && times.length > 0) {
+        const finalTimes = times.map(t => ({
+            uid: t.uid || Utilities.getUuid(),
+            manager_uid: menu.manager_uid,
+            schedule_menu_uid: menu.uid,
+            ...t
+        }));
+        Database.insert('schedule_time', finalTimes);
+        console.log(`- 已同步 ${times.length} 個時段`);
+    }
+
+    return {
+        success: true,
+        message: `排班配置儲存成功`,
+        data: {
+            menu_uid: menu.uid,
+            elapsed: (Date.now() - start) + 'ms'
+        }
+    };
+}
+
+/**
+ * 腳本 4：判斷會員狀態並取得活動與排班配置
+ * 
+ * 1. 若 member 不存在：透過 manager_uid 查詢 manager 的 questionnaire。
+ * 2. 若 member 存在：透過 booking_dynamic_url 與 website_name 查詢 event，並透過其 schedule_menu_uid 找尋對應的時段及覆蓋資料。
+ * 
+ * @param {string} lineUid LINE UID
+ * @param {string} bookingDynamicUrl 預約動態網址
+ * @param {string} websiteName 網站名稱
+ */
+function getMemberEventInfo(lineUid, bookingDynamicUrl, websiteName) {
+    if (!lineUid || !bookingDynamicUrl || !websiteName) {
+        throw new Error("必須提供 line_uid, booking_dynamic_url 與 website_name");
+    }
+
+    console.log(`🔍 [PROC] 正在查詢會員狀態: line_uid=${lineUid}`);
+
+    // 1. 查詢 member table 是否有這個 line_uid
+    const memberRecords = Database.query(`SELECT manager_uid FROM member WHERE line_uid = '${lineUid}'`);
+    const eventRecords = Database.query(`SELECT * FROM event WHERE booking_dynamic_url = '${bookingDynamicUrl}' AND website_name = '${websiteName}'`);
+
+
+    if (memberRecords && memberRecords.length > 0) {
+
+        // 會員存在 => 搜尋 event => 找尋 schedule_override, schedule_time
+        console.log(`- 會員存在，查詢 event 資料: url=${bookingDynamicUrl}, website=${websiteName}`);
+
+        if (!eventRecords || eventRecords.length === 0) {
+            return {
+                success: false,
+                is_member: true,
+                message: "找不到符合的 event 資料"
+            };
+        }
+
+        const eventData = eventRecords[0];
+        const scheduleMenuUid = eventData.schedule_menu_uid;
+
+        let overrideRecords = [];
+        let timeRecords = [];
+
+        if (scheduleMenuUid) {
+            overrideRecords = Database.query(`SELECT * FROM schedule_override WHERE schedule_menu_uid = '${scheduleMenuUid}'`) || [];
+            timeRecords = Database.query(`SELECT * FROM schedule_time WHERE schedule_menu_uid = '${scheduleMenuUid}'`) || [];
+            bookingCache = Database.query(`SELECT * FROM booking_cache WHERE schedule_menu_uid = '${scheduleMenuUid}'`) || [];
+        }
+
+        return {
+            success: true,
+            is_member: true,
+            data: {
+                event: eventData,
+                schedule_override: overrideRecords,
+                schedule_time: timeRecords,
+                booking_cache: bookingCache
+            }
+        };
+
+    } else {
+        // 會員不存在 => 透過 manager_uid 找 manager table
+        const managerUid = eventRecords[0].manager_uid;
+        console.log(`- 會員不存在，查詢 manager_uid=${managerUid} 的問卷`);
+
+        const managerRecords = Database.query(`SELECT questionnaire FROM manager WHERE uid = '${managerUid}'`);
+        const questionnaire = (managerRecords && managerRecords.length > 0) ? managerRecords[0].questionnaire : null;
+
+        return {
+            success: true,
+            is_member: true,
+            data: {
+                questionnaire: questionnaire
+            }
+        };
     }
 }

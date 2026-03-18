@@ -90,3 +90,12 @@ export type Booking = {
     update_at: string;
     manager_uid: string;
 };
+
+export type BookingCache = {
+    uid: string;
+    manager_uid: string;
+    booking_start_time: string;
+    booked_count: number;
+    create_at: string;
+    update_at: string;
+};
