@@ -73,6 +73,8 @@ function initManagerTable() {
         'bank_account',
         'bank_account_owner',
         'line_notify_content',
+        'line_channel_access_token',
+        'google_calendar_access_token',
         'level', // 0:超級管理員, 1:一般管理員
         'questionnaire',
         'create_at',

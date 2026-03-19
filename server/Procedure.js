@@ -302,7 +302,7 @@ function cancelBooking(bookingUid, time_slot_interval, deleteType) {
         // 1. 先讀取這筆預約資料（鎖定前先查，避免持鎖過久）
         const bookingRecords = Database.query(`SELECT manager_uid, booking_start_time, booking_end_time FROM booking WHERE uid = '${bookingUid}'`);
         if (!bookingRecords || bookingRecords.length === 0) {
-            return { success: false, msg: '找不到對應的預約資料' };
+            return { success: true, msg: '找不到對應的預約資料' };
         }
 
         const booking = bookingRecords[0];
