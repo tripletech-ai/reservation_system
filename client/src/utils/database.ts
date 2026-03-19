@@ -21,6 +21,7 @@ export interface GasResponse<T = any> {
  */
 export async function callGasApi<T = any>(payload: GasPayload): Promise<T | null> {
     try {
+        console.log("payload: ", payload)
         const response = await fetch(GAS_URL, {
             method: "POST",
             // 由於 GAS 對 POST 的 Content-Type 處理限制，通常用 text/plain 傳遞 JSON
@@ -35,12 +36,15 @@ export async function callGasApi<T = any>(payload: GasPayload): Promise<T | null
         }
 
         const result: GasResponse<T> = await response.json();
-
+        console.log("result: ", result)
         if (result.status === "fail") {
             console.error("API 錯誤:", result.message);
             return null;
         }
-        console.log(result.data)
+
+        if (result.status === "success") {
+            return result.data ?? null; // 回傳標準化後的資料
+        }
         return result.data ?? null; // 回傳標準化後的資料
     } catch (error) {
         console.error("網路或系統錯誤:", error);

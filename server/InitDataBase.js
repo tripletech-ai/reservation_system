@@ -28,13 +28,13 @@ function createTableIfNotExists(tableName, headers) {
         console.log(`✅ [NEW] 資料表 "${tableName}" 已建立成功。`);
     } else {
         const currentHeaders = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0].map(h => String(h).trim());
-        
+
         // 如果標頭順序不完全一致，強制同步標頭
         if (currentHeaders.join(',') !== headers.join(',')) {
             console.warn(`⚠️ [SYNC] 資料表 "${tableName}" 順序不符，正在重整標頭...`);
             // 只更新第一列標頭，保留下方資料
             sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-            
+
             // 如果列數不足，補齊
             if (sheet.getMaxColumns() < headers.length) {
                 sheet.insertColumnsAfter(sheet.getMaxColumns(), headers.length - sheet.getMaxColumns());
@@ -73,6 +73,7 @@ function initManagerTable() {
         'bank_account',
         'bank_account_owner',
         'line_notify_content',
+        'level', // 0:超級管理員, 1:一般管理員
         'questionnaire',
         'create_at',
         'update_at'

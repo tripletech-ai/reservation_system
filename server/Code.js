@@ -21,7 +21,7 @@ function doPost(e) {
     try {
         const payload = JSON.parse(e.postData.contents);
         const { action, table, data, sql, procedure, params, where } = payload;
-        
+        logInfo(`POST request: ${JSON.stringify(payload)}`);
         // 1. 安全性檢查與白名單過濾
         const allowedActions = ['query', 'select', 'insert', 'update', 'delete', 'call'];
         if (!action || !allowedActions.includes(action.toLowerCase())) {
@@ -116,7 +116,7 @@ function createJsonResponse(input) {
             response.status = 'fail';
             response.message = input.error || '不明錯誤';
         } else if (input.success === true) {
-            const { success, message, ...rest } = input;
+            const { ...rest } = input;
             response.data = Object.keys(rest).length > 0 ? rest : null;
         } else {
             response.data = input;
@@ -124,7 +124,6 @@ function createJsonResponse(input) {
     } else {
         response.data = input;
     }
-
     return ContentService.createTextOutput(JSON.stringify(response))
         .setMimeType(ContentService.MimeType.JSON);
 }

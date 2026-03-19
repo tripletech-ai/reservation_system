@@ -102,14 +102,16 @@ const ScheduleTimeEdit: React.FC = () => {
     const [times, setTimes] = useState<ScheduleTime[]>([]);
     const [overrides, setOverrides] = useState<ScheduleOverride[]>([]);
     const [deletedUids, setDeletedUids] = useState<string[]>([]);
+    const [loadedUid, setLoadedUid] = useState<string | null>(null);
 
     useEffect(() => {
-        if (data) {
+        if (data && loadedUid !== targetUid) {
             setName(data.menu?.name ?? '');
             setTimes(data.times || []);
             setOverrides(data.overrides || []);
+            setLoadedUid(targetUid);
         }
-    }, [data]);
+    }, [data, targetUid, loadedUid]);
 
     // ── Override Modal State ──
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -165,8 +167,11 @@ const ScheduleTimeEdit: React.FC = () => {
             where: `uid = '${uid}'`
         });
         if (res) {
-            setOverrides(prev => prev.filter(o => o.uid !== uid));
-            queryClient.invalidateQueries({ queryKey: ['schedule_menu', targetUid] });
+            setOverrides(prev => {
+                const next = prev.filter(o => o.uid !== uid);
+                queryClient.setQueryData(['schedule_menu', targetUid], (old: any) => old ? { ...old, overrides: next } : old);
+                return next;
+            });
         } else {
             alert('刪除失敗');
         }
@@ -221,8 +226,13 @@ const ScheduleTimeEdit: React.FC = () => {
             }
 
             if (res) {
+                let updatedOverrides: ScheduleOverride[] = [];
                 if (editingOverride) {
-                    setOverrides(prev => prev.map(o => o.uid === editingOverride.uid ? { ...o, ...overrideData, update_at: now } : o));
+                    setOverrides(prev => {
+                        updatedOverrides = prev.map(o => o.uid === editingOverride.uid ? { ...o, ...overrideData, update_at: now } as ScheduleOverride : o);
+                        queryClient.setQueryData(['schedule_menu', targetUid], (old: any) => old ? { ...old, overrides: updatedOverrides } : old);
+                        return updatedOverrides;
+                    });
                 } else {
                     const newOverride: ScheduleOverride = {
                         uid: targetUidOverride,
@@ -234,10 +244,13 @@ const ScheduleTimeEdit: React.FC = () => {
                         create_at: now,
                         update_at: now
                     };
-                    setOverrides(prev => [newOverride, ...prev]);
+                    setOverrides(prev => {
+                        updatedOverrides = [newOverride, ...prev];
+                        queryClient.setQueryData(['schedule_menu', targetUid], (old: any) => old ? { ...old, overrides: updatedOverrides } : old);
+                        return updatedOverrides;
+                    });
                 }
                 setIsModalOpen(false);
-                queryClient.invalidateQueries({ queryKey: ['schedule_menu', targetUid] });
             } else {
                 alert('儲存失敗');
             }

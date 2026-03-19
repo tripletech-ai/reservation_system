@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar as CalendarIcon, Clock, User, Phone, Mail, ChevronRight, ChevronLeft, CheckCircle2, Loader2, Edit, ChevronDown, Check } from 'lucide-react';
 import { callGasApi } from '../utils/database';
@@ -21,12 +21,15 @@ const formatDate = (date: Date | string) => {
 const Booking: React.FC = () => {
     const params = useParams();
     const location = useLocation();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const queryParams = new URLSearchParams(location.search);
 
     const fullUrlPath = params['*'] || '';
     const pathParts = fullUrlPath.split('/').filter(Boolean);
     const websiteNameFromUrl = pathParts[0] || '';
     const dynamicUrlFromUrl = pathParts[1] || '';
+    const scheduleMenuUid = searchParams.get('schedule_menu_uid');
     const lineUidFromUrl = queryParams.get('line_uid');
 
     // ── State ──────────────────────────────────────────────────────────────────
@@ -86,24 +89,40 @@ const Booking: React.FC = () => {
     // ── Queries ────────────────────────────────────────────────────────────────
 
     const { data: memberEventInfo, isLoading: isEventLoading } = useQuery({
-        queryKey: ['booking_member_event', lineUidFromUrl, dynamicUrlFromUrl, websiteNameFromUrl],
+        queryKey: ['booking_member_event', lineUidFromUrl, dynamicUrlFromUrl, websiteNameFromUrl, scheduleMenuUid],
         queryFn: async () => {
             const res = await callGasApi<any>({
                 action: 'call',
                 procedure: 'getMemberEventInfo',
-                params: [lineUidFromUrl || '', dynamicUrlFromUrl || '', websiteNameFromUrl || '']
+                params: [lineUidFromUrl || '', dynamicUrlFromUrl || '', websiteNameFromUrl || '', scheduleMenuUid || '']
             });
-            return res?.result || null;
+            return res || null;
         },
         enabled: !!websiteNameFromUrl && !!dynamicUrlFromUrl
     });
 
-    const event = memberEventInfo?.data?.event as EventData | null | undefined;
+    const event = memberEventInfo?.event as EventData | null | undefined;
     const scheduleData = memberEventInfo ? {
-        times: (memberEventInfo.data?.schedule_time || []) as ScheduleTime[],
-        overrides: (memberEventInfo.data?.schedule_override || []) as ScheduleOverride[]
+        times: (memberEventInfo.schedule_time || []) as ScheduleTime[],
+        overrides: (memberEventInfo.schedule_override || []) as ScheduleOverride[]
     } : undefined;
-    const bookingCache = (memberEventInfo?.data?.booking_cache || []) as BookingCache[];
+    const bookingCache = (memberEventInfo?.booking_cache || []) as BookingCache[];
+
+    useEffect(() => {
+        console.log(memberEventInfo);
+        console.log(event);
+        if (memberEventInfo && memberEventInfo.is_member === false) {
+            navigate('/register', {
+                state: {
+                    line_uid: lineUidFromUrl,
+                    manager_uid: event?.manager_uid,
+                    questionnaire: memberEventInfo.questionnaire,
+                    return_url: location.pathname + location.search
+                },
+                replace: true
+            });
+        }
+    }, [memberEventInfo, lineUidFromUrl, navigate, location.pathname, location.search]);
 
     // 這裡要注意：目前的 executeSQL 回傳的是陣列，若是 INSERT 則由後端 GAS 處理
     // 為了保險起見，我們改用 executeNonQuery (如果後端有支援)
@@ -221,7 +240,7 @@ const Booking: React.FC = () => {
         if (activeRules.length === 0) return [];
 
         // 2. 進行時段切分與容量合併 (每 30 分鐘一格)
-        const slots: { uid: string, time_range: string, max_capacity: number, available_capacity: number }[] = [];
+        const rawSlots: { uid: string, time_range: string, max_capacity: number, available_capacity: number, start_minutes: number }[] = [];
 
         // 從最早開始到最晚結束
         const minStart = Math.min(...activeRules.map(r => r.start));
@@ -242,23 +261,49 @@ const Booking: React.FC = () => {
             if (bestCap > 0) {
                 const slotStartStr = `${dateStr} ${minutesToTime(time)}`;
                 // 找尋 bookingCache 中有沒有這個起點時間的紀錄，因為 GAS 可能回傳結尾多了 :00 或沒有，作模糊比對
+
                 const cached = bookingCache.find(bc => bc.booking_start_time.startsWith(slotStartStr));
                 const bookedCount = cached ? Number(cached.booked_count) : 0;
                 const available = bestCap - bookedCount;
-
                 if (available > 0) {
-                    slots.push({
+                    rawSlots.push({
                         uid: `${dateStr}_${minutesToTime(time)}`,
                         time_range: `${minutesToTime(time)}-${minutesToTime(time + 30)}`,
                         max_capacity: bestCap,
-                        available_capacity: available
+                        available_capacity: available,
+                        start_minutes: time
                     });
                 }
             }
         }
 
-        console.log(`Generated ${slots.length} slots for ${dateStr}`, slots);
-        return slots;
+        // 3. 確保連續時段：如果服務需要跨越多個 30 分鐘方塊，檢查後續的時段是否也都可用
+        const serviceDuration = formData.selectedService ? Number(formData.selectedService.duration) : 30;
+        const requiredBlocks = Math.ceil(serviceDuration / 30);
+
+        const validSlots = [];
+        for (let i = 0; i < rawSlots.length; i++) {
+            let isValid = true;
+            for (let j = 0; j < requiredBlocks; j++) {
+                const targetBlock = rawSlots[i + j];
+                // 如果沒有後繼時段（跨越下班時間）或時段不連續（中間卡到午休/已經客滿被拔除）
+                if (!targetBlock || targetBlock.start_minutes !== (rawSlots[i].start_minutes + j * 30)) {
+                    isValid = false;
+                    break;
+                }
+            }
+            if (isValid) {
+                validSlots.push({
+                    uid: rawSlots[i].uid,
+                    time_range: rawSlots[i].time_range,
+                    max_capacity: rawSlots[i].max_capacity,
+                    available_capacity: rawSlots[i].available_capacity
+                });
+            }
+        }
+
+        console.log(`Generated ${validSlots.length} valid slots for ${dateStr} (Service: ${serviceDuration}m)`, validSlots);
+        return validSlots;
     };
 
     // ── Render ─────────────────────────────────────────────────────────────────
@@ -269,6 +314,17 @@ const Booking: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                     <Loader2 className="animate-spin" size={40} color="var(--primary)" />
                     <p style={{ color: '#94a3b8', fontWeight: 500 }}>正在開啟預約門扉...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (memberEventInfo?.is_member === false) {
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f8fafc' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                    <Loader2 className="animate-spin" size={40} color="var(--primary)" />
+                    <p style={{ color: '#94a3b8', fontWeight: 500 }}>正在前往註冊頁面...</p>
                 </div>
             </div>
         );
@@ -399,6 +455,7 @@ const Booking: React.FC = () => {
                                                 { label: '電話', id: 'phone', icon: Phone, placeholder: '09XX-XXX-XXX', required: event.is_phone_required, type: 'tel' },
                                                 { label: '信箱', id: 'email', icon: Mail, placeholder: 'example@email.com', required: event.is_email_required, type: 'email' }
                                             ].map((field) => (
+
                                                 field.required && (
                                                     <div key={field.id}>
                                                         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.4rem', marginLeft: '0.2rem' }}>{field.label}*</label>
@@ -624,7 +681,7 @@ const Booking: React.FC = () => {
                                                         color: 'green',
                                                         opacity: 0.8
                                                     }}>
-                                                        餘 {slot.max_capacity} 位
+                                                        餘 {slot.available_capacity} 位
                                                     </span>
                                                 </button>
                                             ))}

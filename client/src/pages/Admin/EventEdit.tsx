@@ -106,8 +106,8 @@ const EventEdit: React.FC = () => {
             setEventState({
                 title: dbEvent.title,
                 description: dbEvent.description,
-                is_email_required: !!dbEvent.is_email_required,
-                is_phone_required: !!dbEvent.is_phone_required,
+                is_email_required: dbEvent.is_email_required,
+                is_phone_required: dbEvent.is_phone_required,
                 website_name: manager?.website_name || '',
                 booking_dynamic_url: dbEvent.booking_dynamic_url || '',
                 options: dbEvent.options ? JSON.parse(dbEvent.options) : { name: '', items: [] },
@@ -128,8 +128,8 @@ const EventEdit: React.FC = () => {
                 const hasChanged =
                     eventState.title !== dbEvent.title ||
                     eventState.description !== dbEvent.description ||
-                    !!eventState.is_phone_required !== !!dbEvent.is_phone_required ||
-                    !!eventState.is_email_required !== !!dbEvent.is_email_required ||
+                    eventState.is_phone_required !== dbEvent.is_phone_required ||
+                    eventState.is_email_required !== dbEvent.is_email_required ||
                     eventState.booking_dynamic_url !== (dbEvent.booking_dynamic_url || '') ||
                     menuJson !== dbEvent.options ||
                     hoursJson !== dbEvent.schedule_menu_uid;
@@ -145,8 +145,8 @@ const EventEdit: React.FC = () => {
                 title: eventState.title,
                 logo_url: manager?.logo_url,
                 description: eventState.description,
-                is_phone_required: eventState.is_phone_required ? 1 : 0,
-                is_email_required: eventState.is_email_required ? 1 : 0,
+                is_phone_required: eventState.is_phone_required,
+                is_email_required: eventState.is_email_required,
                 website_name: manager?.website_name,
                 booking_dynamic_url: eventState.booking_dynamic_url,
                 options: menuJson,

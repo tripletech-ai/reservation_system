@@ -81,7 +81,7 @@ export type Booking = {
     phone: string;
     booking_start_time: string;
     booking_end_time: string;
-    service_id: string; // 可能是 JSON 或特定的服務名稱
+    service_item: string; // 可能是 JSON 或特定的服務名稱
     is_deposit_received: boolean;
     is_cancelled: boolean;
     reminded_1day_sent: boolean;

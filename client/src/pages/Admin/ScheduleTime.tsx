@@ -12,7 +12,7 @@ const DAY_LABELS = ['週一', '週二', '週三', '週四', '週五', '週六', 
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const ScheduleTime: React.FC = () => {
+const ScheduleTimes: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { manager } = useAuth();
@@ -208,4 +208,4 @@ const ScheduleTime: React.FC = () => {
     );
 };
 
-export default ScheduleTime;
+export default ScheduleTimes;

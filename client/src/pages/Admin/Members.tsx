@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Search, Filter, X, Mail, Calendar, ShieldCheck, Phone, MapPin, Power, Loader2, RefreshCcw, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { callGasApi } from '../../utils/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,12 +10,15 @@ const STATUS_MAP: Record<number, string> = {
     1: '活躍'
 };
 
+const ITEMS_PER_PAGE = 10;
+
 const Members: React.FC = () => {
     const queryClient = useQueryClient();
+    const { manager } = useAuth();
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const { manager } = useAuth()
-    const itemsPerPage = 10;
+    const [isManualRefetching, setIsManualRefetching] = useState(false);
 
     // 使用 TanStack Query 取得會員列表
     const {
@@ -26,12 +29,12 @@ const Members: React.FC = () => {
         refetch,
         dataUpdatedAt
     } = useQuery({
-        queryKey: ['members'],
+        queryKey: ['members', manager?.uid],
         queryFn: async () => {
             const result = await callGasApi<Member[]>({
                 action: "select",
                 table: 'member',
-                where: `manager_uid = '${manager.uid}' ORDER BY create_at DESC`
+                where: `manager_uid = '${manager?.uid}' ORDER BY create_at DESC`
             });
             return result || [];
         },
@@ -53,10 +56,7 @@ const Members: React.FC = () => {
             return { uid, newStatus };
         },
         onSuccess: (data) => {
-            // 讓 members 緩存失效，觸發背後重抓
             queryClient.invalidateQueries({ queryKey: ['members'] });
-
-            // 同步更新彈窗內的狀態
             if (selectedMember?.uid === data.uid) {
                 setSelectedMember(prev => prev ? { ...prev, status: data.newStatus } : null);
             }
@@ -73,20 +73,31 @@ const Members: React.FC = () => {
         toggleStatusMutation.mutate({ uid, newStatus });
     };
 
+    // 搜尋過濾邏輯
+    const filteredMembers = useMemo(() => {
+        if (!searchText.trim()) return memberList;
+        const kw = searchText.toLowerCase();
+        return memberList.filter(m =>
+            m.name?.toLowerCase().includes(kw) ||
+            m.phone?.toString().includes(kw) ||
+            m.email?.toLowerCase().includes(kw)
+        );
+    }, [memberList, searchText]);
+
     // 分頁邏輯
-    const totalPages = Math.ceil(memberList.length / itemsPerPage);
-    const paginatedMembers = memberList.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
+    const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
+    const paginatedMembers = filteredMembers.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
     );
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
-        // 切換分頁時回到頂部或做其他體驗優化
     };
 
     return (
         <div className="animate-in">
+            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>會員管理</h1>
@@ -101,167 +112,110 @@ const Members: React.FC = () => {
                     </div>
                 </div>
                 <button
-                    onClick={() => refetch()}
+                    onClick={async () => { setIsManualRefetching(true); await refetch(); setIsManualRefetching(false); }}
                     disabled={isFetching}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        background: '#fff',
-                        border: '1px solid #e2e8f0',
-                        color: '#475569',
-                        padding: '0.625rem 1rem',
-                        fontSize: '0.875rem'
-                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', border: '1px solid #e2e8f0', color: '#475569', padding: '0.625rem 1rem', fontSize: '0.875rem', borderRadius: '0.5rem' }}
                 >
                     <RefreshCcw size={16} className={isFetching ? "animate-spin" : ""} />
                     {isFetching ? '更新中...' : '手動刷新'}
                 </button>
             </div>
 
-            <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ position: 'relative', flex: 1 }}>
-                        <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
-                        <input type="text" placeholder="搜尋會員名稱、郵箱..." style={{ width: '100%', paddingLeft: '2.75rem', color: '#1e293b', border: '1px solid #e2e8f0', background: '#f8fafc' }} />
-                    </div>
-                    <button style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Filter size={18} /> 篩選
-                    </button>
-                </div>
+            {/* Search */}
+            <div style={{ position: 'relative', marginBottom: '1.5rem', maxWidth: '420px' }}>
+                <Search size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input
+                    type="text"
+                    value={searchText}
+                    placeholder="搜尋姓名、電話、郵箱..."
+                    onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }}
+                    style={{ width: '100%', paddingLeft: '2.5rem', height: '40px', borderRadius: '0.5rem', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.875rem', color: '#1e293b', outline: 'none' }}
+                />
+            </div>
 
-                <table style={{ position: 'relative' }}>
-                    <thead>
-                        <tr>
-                            <th>姓名</th>
-                            <th>電話號碼</th>
-                            <th>加入日期</th>
-                            <th>狀態</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan={4} style={{ textAlign: 'center', padding: '4rem 0' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: '#64748b' }}>
-                                        <Loader2 className="animate-spin" size={32} />
-                                        <span>正在讀取資料...</span>
-                                    </div>
-                                </td>
+            <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+                {(isLoading || (isFetching && !isManualRefetching)) ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: '#64748b', padding: '6rem 0' }}>
+                        <Loader2 className="animate-spin" size={32} color="var(--primary)" />
+                        <span style={{ fontWeight: 500 }}>正在讀取資料...</span>
+                    </div>
+                ) : error ? (
+                    <div style={{ textAlign: 'center', padding: '4rem 0', color: '#ef4444' }}>
+                        讀取失敗: {(error as Error).message}
+                    </div>
+                ) : paginatedMembers.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '4rem 0', color: '#64748b' }}>
+                        {searchText ? '查無符合的會員資料' : '尚無會員資料'}
+                    </div>
+                ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+                                {['姓名', '電話號碼', '加入日期', '狀態'].map(h => (
+                                    <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.8125rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
+                                ))}
                             </tr>
-                        ) : error ? (
-                            <tr>
-                                <td colSpan={4} style={{ textAlign: 'center', padding: '4rem 0', color: '#ef4444' }}>
-                                    讀取失敗: {(error as Error).message}
-                                </td>
-                            </tr>
-                        ) : memberList.length === 0 ? (
-                            <tr>
-                                <td colSpan={4} style={{ textAlign: 'center', padding: '4rem 0', color: '#64748b' }}>
-                                    尚無資料
-                                </td>
-                            </tr>
-                        ) : (
-                            paginatedMembers.map(member => (
+                        </thead>
+                        <tbody>
+                            {paginatedMembers.map((member, i) => (
                                 <tr
                                     key={member.uid}
                                     onClick={() => setSelectedMember(member)}
-                                    style={{ cursor: 'pointer', transition: 'background 0.2s' }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
+                                    style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', transition: 'background 0.15s' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = '#f0f7ff')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? '#fff' : '#fafafa')}
                                 >
-                                    <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{member.name}</td>
-                                    <td style={{ color: '#64748b' }}>{member.phone}</td>
-                                    <td>{member.create_at.split('T')[0]}</td>
-                                    <td>
+                                    <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#0f172a', fontSize: '0.9rem' }}>{member.name}</td>
+                                    <td style={{ padding: '0.75rem 1rem', color: '#475569', fontSize: '0.875rem' }}>{member.phone}</td>
+                                    <td style={{ padding: '0.75rem 1rem', color: '#475569', fontSize: '0.875rem' }}>{member.create_at.split('T')[0]}</td>
+                                    <td style={{ padding: '0.75rem 1rem' }}>
                                         <span style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '0.375rem',
                                             color: member.status === 1 ? '#22c55e' : '#ef4444',
-                                            fontWeight: 500
+                                            fontWeight: 600,
+                                            fontSize: '0.85rem'
                                         }}>
                                             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }} />
                                             {STATUS_MAP[member.status] || '未知'}
                                         </span>
                                     </td>
-
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-
-                {/* Pagination Footer */}
-                {!isLoading && !error && memberList.length > 0 && (
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginTop: '1.5rem',
-                        paddingTop: '1.5rem',
-                        borderTop: '1px solid #f1f5f9'
-                    }}>
-                        <div style={{ color: '#64748b', fontSize: '0.875rem' }}>
-                            顯示第 {(currentPage - 1) * itemsPerPage + 1} 至 {Math.min(currentPage * itemsPerPage, memberList.length)} 筆，共 {memberList.length} 筆
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                style={{
-                                    padding: '0.5rem',
-                                    background: '#fff',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '0.5rem',
-                                    color: currentPage === 1 ? '#cbd5e1' : '#475569',
-                                    display: 'flex',
-                                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                <ChevronLeft size={18} />
-                            </button>
-
-                            {[...Array(totalPages)].map((_, i) => (
-                                <button
-                                    key={i + 1}
-                                    onClick={() => handlePageChange(i + 1)}
-                                    style={{
-                                        minWidth: '2.25rem',
-                                        height: '2.25rem',
-                                        padding: '0',
-                                        background: currentPage === i + 1 ? 'var(--primary-gradient)' : '#fff',
-                                        border: '1px solid',
-                                        borderColor: currentPage === i + 1 ? 'transparent' : '#e2e8f0',
-                                        borderRadius: '0.5rem',
-                                        color: currentPage === i + 1 ? '#fff' : '#475569',
-                                        fontWeight: 600,
-                                        fontSize: '0.875rem'
-                                    }}
-                                >
-                                    {i + 1}
-                                </button>
                             ))}
-
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                style={{
-                                    padding: '0.5rem',
-                                    background: '#fff',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '0.5rem',
-                                    color: currentPage === totalPages ? '#cbd5e1' : '#475569',
-                                    display: 'flex',
-                                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                <ChevronRight size={18} />
-                            </button>
-                        </div>
-                    </div>
+                        </tbody>
+                    </table>
                 )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        style={{ padding: '0.5rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.5rem', color: currentPage === 1 ? '#cbd5e1' : '#475569', display: 'flex', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronLeft size={18} />
+                    </button>
+                    {[...Array(totalPages)].map((_, i) => (
+                        <button
+                            key={i + 1}
+                            onClick={() => handlePageChange(i + 1)}
+                            style={{ minWidth: '2.25rem', height: '2.25rem', padding: 0, background: currentPage === i + 1 ? 'var(--primary-gradient)' : '#fff', border: '1px solid', borderColor: currentPage === i + 1 ? 'transparent' : '#e2e8f0', borderRadius: '0.5rem', color: currentPage === i + 1 ? '#fff' : '#475569', fontWeight: 600, fontSize: '0.875rem' }}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        style={{ padding: '0.5rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.5rem', color: currentPage === totalPages ? '#cbd5e1' : '#475569', display: 'flex', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronRight size={18} />
+                    </button>
+                </div>
+            )}
 
             {/* Member Details Dialog */}
             {selectedMember && (
@@ -308,7 +262,6 @@ const Members: React.FC = () => {
                                         }}>
                                             ID: #{selectedMember.uid.toString().padStart(4, '0')}
                                         </span>
-
                                     </div>
                                 </div>
                             </div>
@@ -348,6 +301,34 @@ const Members: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* Questionnaire */}
+                            {(() => {
+                                if (!selectedMember.questionnaire) return null;
+                                try {
+                                    const qa: { title: string; ans: string }[] = JSON.parse(selectedMember.questionnaire);
+                                    if (!Array.isArray(qa) || qa.length === 0) return null;
+                                    return (
+                                        <div style={{ marginTop: '1.5rem' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#64748b', marginBottom: '0.75rem', fontWeight: 600 }}>
+                                                📋 偏好問卷
+                                            </label>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                {qa.map((item, idx) => (
+                                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
+                                                        <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500 }}>{item.title}</span>
+                                                        <span style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: 700, background: '#e0e7ff', padding: '0.2rem 0.65rem', borderRadius: '2rem' }}>
+                                                            {item.ans || '—'}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                } catch {
+                                    return null;
+                                }
+                            })()}
+
                         </div>
                         <div className="modal-footer">
                             <button
@@ -379,5 +360,3 @@ const Members: React.FC = () => {
 };
 
 export default Members;
-
-
