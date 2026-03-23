@@ -13,17 +13,15 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const { schedule_menu_uid, line_uid } = await searchParams
 
   const data = await getBookingInfo(websiteName, dynamicUrl, schedule_menu_uid, line_uid)
-
   if (!data) {
     notFound()
   }
-
   // 如果提供了 line_uid 但找不到會員，跳轉到註冊頁面 (依據參考邏輯)
   if (line_uid && !data.is_member) {
     const query = new URLSearchParams({
       line_uid,
       manager_uid: data.event.manager_uid,
-      return_url: `/booking/${websiteName}/${dynamicUrl}${schedule_menu_uid ? `?schedule_menu_uid=${schedule_menu_uid}` : ''}`,
+      return_url: `/booking/${websiteName}/${dynamicUrl}${schedule_menu_uid ? `?schedule_menu_uid=${schedule_menu_uid}&line_uid=${line_uid}` : `?line_uid=${line_uid}`}`,
       questionnaire: JSON.stringify(data.manager?.questionnaire)
     }).toString()
 

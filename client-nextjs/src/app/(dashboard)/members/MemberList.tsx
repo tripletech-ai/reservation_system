@@ -287,34 +287,44 @@ export default function MemberList({
                 {selectedMember.questionnaire && (
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Calendar size={16} className="text-purple-400" /> 會員問卷資料
+                      <Calendar size={16} className="text-purple-400" /> 訪談問卷答案
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.entries(selectedMember.questionnaire).length > 0 ? (
-                        Object.entries(selectedMember.questionnaire).map(([key, value]) => {
-                          const isQuestionPair = typeof value === 'object' && value !== null && 'title' in value && 'ans' in value
-                          const displayTitle = isQuestionPair ? (value as any).title : key.replace(/_/g, ' ')
-                          const displayAns = isQuestionPair ? (value as any).ans : (typeof value === 'object' ? JSON.stringify(value) : String(value))
+                    <div className="grid grid-cols-1 gap-4">
+                      {(() => {
+                        try {
+                          const qData = typeof selectedMember.questionnaire === 'string'
+                            ? JSON.parse(selectedMember.questionnaire)
+                            : selectedMember.questionnaire;
+
+                          if (Array.isArray(qData) && qData.length > 0) {
+                            return qData.map((item: any, idx: number) => (
+                              <div key={idx} className="p-4 bg-white/[0.03] border border-white/10 rounded-2xl">
+                                <p className="text-xs font-bold text-purple-400 mb-1 uppercase tracking-wider">{item.title}</p>
+                                <p className="text-slate-100 font-medium">{item.ans || '(未填寫)'}</p>
+                              </div>
+                            ));
+                          }
+
+                          if (typeof qData === 'object' && qData !== null && Object.keys(qData).length > 0) {
+                            return Object.entries(qData).map(([key, value]: [string, any]) => (
+                              <div key={key} className="p-4 bg-white/[0.03] border border-white/10 rounded-2xl">
+                                <p className="text-xs font-bold text-purple-400 mb-1 uppercase tracking-wider">{key}</p>
+                                <p className="text-slate-100 font-medium whitespace-pre-wrap">
+                                  {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                </p>
+                              </div>
+                            ));
+                          }
 
                           return (
-                            <div
-                              key={key}
-                              className="group p-4 bg-white/[0.03] border border-white/10 rounded-2xl hover:bg-white/[0.06] hover:border-purple-500/30 transition-all duration-300"
-                            >
-                              <p className="text-sm font-bold text-slate-400 mb-2 group-hover:text-purple-400 transition-colors uppercase font-mono tracking-wider">
-                                {displayTitle}
-                              </p>
-                              <p className="text-lg text-slate-100 font-medium whitespace-pre-wrap leading-relaxed">
-                                {displayAns}
-                              </p>
+                            <div className="p-8 text-center bg-white/5 border border-dashed border-white/10 rounded-2xl text-slate-500 italic">
+                              尚無填寫問卷紀錄
                             </div>
-                          )
-                        })
-                      ) : (
-                        <div className="col-span-2 p-8 text-center bg-white/5 border border-dashed border-white/10 rounded-2xl text-slate-500 italic">
-                          尚無填寫問卷紀錄
-                        </div>
-                      )}
+                          );
+                        } catch (e) {
+                          return <p className="text-slate-500 italic">解析失敗</p>;
+                        }
+                      })()}
                     </div>
                   </div>
                 )}

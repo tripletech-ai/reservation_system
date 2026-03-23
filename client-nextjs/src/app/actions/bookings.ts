@@ -55,3 +55,23 @@ export async function cancelBooking(bookingUid: string, timeSlotInterval: number
     return { success: false, message: err.message }
   }
 }
+
+export async function updateBookingDepositStatus(uid: string, isDepositReceived: boolean) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('booking')
+      .update({
+        is_deposit_received: isDepositReceived,
+        update_at: new Date().toISOString()
+      })
+      .eq('uid', uid)
+
+    if (error) throw error
+
+    revalidatePath('/bookings')
+    return { success: true }
+  } catch (err: any) {
+    console.error('updateBookingDepositStatus Error:', err)
+    return { success: false, message: err.message }
+  }
+}

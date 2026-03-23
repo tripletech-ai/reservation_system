@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Phone, Mail, ExternalLink, X, ChevronLeft, ChevronRight, User, Calendar, Clock, Tag, DollarSign, Ban, CheckCircle2, Loader2 } from 'lucide-react'
 import type { Booking, BookingListProps } from '@/types'
-import { cancelBooking } from '@/app/actions/bookings'
+import { cancelBooking, updateBookingDepositStatus } from '@/app/actions/bookings'
 import { TIME_SLOT_INTERVAL } from '@/constants/common'
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -21,9 +21,17 @@ export default function BookingList({
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [searchValue, setSearchValue] = useState(initialSearch)
   const [isCancelling, setIsCancelling] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [tempDepositStatus, setTempDepositStatus] = useState<boolean>(false)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (selectedBooking) {
+      setTempDepositStatus(selectedBooking.is_deposit_received)
+    }
+  }, [selectedBooking])
 
   const totalPages = Math.ceil(totalCount / pageSize)
 
@@ -66,6 +74,19 @@ export default function BookingList({
       alert('操作失敗: ' + (res.message || '未知錯誤'))
     }
     setIsCancelling(false)
+  }
+
+  const handleUpdateStatus = async () => {
+    if (!selectedBooking) return
+    setIsSaving(true)
+    const res = await updateBookingDepositStatus(selectedBooking.uid, tempDepositStatus)
+    if (res.success) {
+      setSelectedBooking({ ...selectedBooking, is_deposit_received: tempDepositStatus })
+      router.refresh()
+    } else {
+      alert('儲存失敗: ' + (res.message || '未知錯誤'))
+    }
+    setIsSaving(false)
   }
 
   return (
@@ -253,7 +274,22 @@ export default function BookingList({
                     <InfoItem icon={<Tag className="text-emerald-400" size={16} />} label="服務項目" value={selectedBooking.service_item} />
                   </div>
                   <InfoItem icon={<Clock className="text-yellow-400" size={16} />} label="開始時間" value={new Date(selectedBooking.booking_start_time).toLocaleString('zh-TW')} />
-                  <InfoItem icon={<Clock className="text-rose-400" size={16} />} label="預約狀態" value={selectedBooking.is_cancelled ? '已取消' : (selectedBooking.is_deposit_received ? '已支付訂金' : '待支付')} />
+                  <div className="space-y-2">
+                    <p className="text-xs text-slate-500 uppercase font-mono flex items-center gap-2">
+                      <DollarSign size={14} className="text-emerald-400" /> 訂金支付狀態
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setTempDepositStatus(!tempDepositStatus)}
+                        className={`relative w-12 h-6 rounded-full transition-colors duration-200 outline-none ${tempDepositStatus ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                      >
+                        <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${tempDepositStatus ? 'translate-x-6' : ''}`} />
+                      </button>
+                      <span className={`text-sm font-bold ${tempDepositStatus ? 'text-emerald-400' : 'text-slate-400'}`}>
+                        {tempDepositStatus ? '已付訂金' : '待支付'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {selectedBooking.notes && (
@@ -267,9 +303,19 @@ export default function BookingList({
               </div>
 
               <div className="p-8 pt-0 flex gap-3">
+                {tempDepositStatus !== selectedBooking.is_deposit_received && (
+                  <button
+                    disabled={isSaving}
+                    onClick={handleUpdateStatus}
+                    className="flex-[1.5] py-4 bg-emerald-600 rounded-2xl font-bold text-white hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                  >
+                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
+                    儲存訂金狀態
+                  </button>
+                )}
                 {!selectedBooking.is_cancelled && (
                   <button
-                    disabled={isCancelling}
+                    disabled={isCancelling || isSaving}
                     onClick={() => handleCancel(1)}
                     className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/30 transition-all text-slate-300 flex items-center justify-center gap-2"
                   >

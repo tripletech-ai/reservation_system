@@ -35,9 +35,6 @@ export default async function BookingsPage({
           <h1 className="text-3xl font-bold tracking-tight">預約管理</h1>
           <p className="text-slate-400 mt-1">追蹤並管理所有客戶預約狀態</p>
         </div>
-        <button className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold shadow-lg shadow-cyan-500/20 hover:scale-105 transition-all">
-          新增預約
-        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
