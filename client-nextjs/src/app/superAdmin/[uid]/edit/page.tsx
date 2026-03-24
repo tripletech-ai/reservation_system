@@ -55,7 +55,7 @@ function LineNotifyBuilder({
                 value={entry.key}
                 onChange={(e) => update(i, 'key', e.target.value)}
                 placeholder="關鍵字（如：獲取驗證碼）"
-                className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-4 text-sm text-white focus:outline-none focus:border-emerald-500/40 transition-all font-bold"
+                className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-4 text-base text-white focus:outline-none focus:border-emerald-500/40 transition-all font-bold"
               />
               <button
                 type="button"
@@ -68,9 +68,9 @@ function LineNotifyBuilder({
             <textarea
               value={entry.value}
               onChange={(e) => update(i, 'value', e.target.value)}
-              placeholder="回覆內容（可多行）"
+              placeholder="回覆內容（可多行）需要call function ex: @CALL get_booking_history"
               rows={3}
-              className="w-full bg-white/[0.02] border border-white/[0.07] rounded-xl py-2 px-4 text-sm text-slate-300 focus:outline-none focus:border-emerald-500/30 transition-all resize-none"
+              className="w-full bg-white/[0.02] border border-white/[0.07] rounded-xl py-2 px-4 text-base text-white focus:outline-none focus:border-emerald-500/30 transition-all resize-none"
             />
           </motion.div>
         ))}
@@ -136,7 +136,7 @@ function QuestionnaireBuilder({
                 value={q.title}
                 onChange={(e) => updateTitle(qIdx, e.target.value)}
                 placeholder="題目標題"
-                className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-4 text-sm text-white focus:outline-none focus:border-purple-500/40 transition-all font-bold"
+                className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-4 text-base text-white focus:outline-none focus:border-purple-500/40 transition-all font-bold"
               />
               <button
                 type="button"
@@ -161,7 +161,7 @@ function QuestionnaireBuilder({
                       value={opt.title}
                       onChange={(e) => updateOption(qIdx, oIdx, e.target.value)}
                       placeholder={`選項 ${oIdx + 1}`}
-                      className="flex-1 bg-white/[0.02] border border-white/[0.07] rounded-lg py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-cyan-500/30 transition-all"
+                      className="flex-1 bg-white/[0.02] border border-white/[0.07] rounded-lg py-1.5 px-3 text-sm text-white focus:outline-none focus:border-cyan-500/30 transition-all"
                     />
                     <button
                       type="button"
@@ -221,7 +221,7 @@ function Section({
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-all"
       >
-        <p className={`text-[11px] font-black ${colorMap[color] ?? 'text-white'} uppercase tracking-[0.3em]`}>
+        <p className={`text-sm font-black ${colorMap[color] ?? 'text-white'} uppercase tracking-[0.2em]`}>
           {title}
         </p>
         {open ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
@@ -244,14 +244,14 @@ function Section({
 }
 
 const inputCls =
-  'w-full bg-white/[0.03] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-purple-500/40 transition-all'
+  'w-full bg-white/[0.05] border border-white/15 rounded-xl py-3 px-4 text-base text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500/60 transition-all'
 const areaCls =
-  'w-full bg-white/[0.03] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-purple-500/40 transition-all resize-none'
+  'w-full bg-white/[0.05] border border-white/15 rounded-xl py-3 px-4 text-base text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500/60 transition-all resize-none'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-black text-slate-300 uppercase tracking-widest italic ml-0.5">
+    <div className="space-y-2">
+      <label className="block text-sm font-extrabold text-white uppercase tracking-wider ml-0.5">
         {label}
       </label>
       {children}
