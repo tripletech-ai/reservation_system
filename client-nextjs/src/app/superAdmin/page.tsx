@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { getAllManagers, deleteManager } from '@/app/actions/superManagers'
 import { getSuperSession, superLogoutAction } from '@/app/actions/superAuth'
+import { useAlert } from '@/components/ui/DialogProvider'
 
 
 
@@ -18,6 +19,7 @@ export default function SuperAdminPage() {
   const [loading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
   const router = useRouter()
+  const { showAlert, showConfirm } = useAlert()
 
   useEffect(() => {
     async function checkSession() {
@@ -43,10 +45,16 @@ export default function SuperAdminPage() {
 
 
   const handleDelete = async (uid: string) => {
-    if (!confirm('確定要刪除此管理員嗎？')) return
+    const isConfirmed = await showConfirm({
+      message: '確定要刪除此管理員嗎？',
+      type: 'warning',
+      confirmText: '確定刪除',
+      cancelText: '取消'
+    })
+    if (!isConfirmed) return
     const res = await deleteManager(uid)
     if (res.success) loadManagers()
-    else alert(res.message || '刪除失敗')
+    else showAlert({ message: res.message || '刪除失敗', type: 'error' })
   }
 
   return (

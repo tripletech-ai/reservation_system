@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Triple",
 };
 
+import { DialogProvider } from "@/components/ui/DialogProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +29,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <DialogProvider>
+          {children}
+        </DialogProvider>
+      </body>
     </html>
   );
 }

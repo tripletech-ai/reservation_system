@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { BookingClientProps } from '@/types'
+import { useAlert } from '@/components/ui/DialogProvider'
 import { submitBooking } from '@/app/actions/bookings'
 import { TIME_SLOT_INTERVAL } from '@/constants/common'
 import dayjs from 'dayjs';
@@ -106,6 +107,7 @@ const SimpleCalendar: React.FC<{ selected: Date | null, onSelect: (d: Date) => v
 
 export default function BookingClient(props: BookingClientProps) {
   const router = useRouter()
+  const { showAlert } = useAlert()
   const { is_member, manager, event, schedule, booking_cache, line_uid } = props
 
   // -- State --
@@ -299,11 +301,11 @@ export default function BookingClient(props: BookingClientProps) {
       if (res.success) {
         setStep(3)
       } else {
-        alert(res.message || '預約失敗，請稍後再試。')
+        showAlert({ message: res.message || '預約失敗，請稍後再試。', type: 'error' })
       }
     } catch (err) {
       console.error(err)
-      alert('預約發生錯誤')
+      showAlert({ message: '預約發生錯誤', type: 'error' })
     } finally {
       setIsSubmitting(false)
     }

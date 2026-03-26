@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import type { ScheduleTime, ScheduleOverride, ScheduleFormProps } from '@/types'
 import { saveScheduleConfig, saveOverride, deleteOverride } from '@/app/actions/schedules'
+import { useAlert } from '@/components/ui/DialogProvider'
 import { nanoid } from 'nanoid'
 
 
@@ -22,6 +23,7 @@ const END_TIME_OPTIONS = [...TIME_OPTIONS.slice(1), '23:59']
 export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFormProps) {
   const isNew = id === 'new'
   const router = useRouter()
+  const { showAlert, showConfirm } = useAlert()
   const [isSaving, setIsSaving] = useState(false)
 
   // Form State
@@ -136,11 +138,11 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
         router.push('/schedules')
         router.refresh()
       } else {
-        alert('儲存失敗: ' + res.message)
+        showAlert({ message: '儲存失敗: ' + res.message, type: 'error' })
       }
     } catch (err) {
       console.error(err)
-      alert('系統錯誤')
+      showAlert({ message: '系統錯誤', type: 'error' })
     } finally {
       setIsSaving(false)
     }
@@ -163,12 +165,16 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
   }
 
   const handleDeleteOverride = async (uid: string) => {
-    if (!confirm('確定要刪除此特別日期設定嗎？')) return
+    const isConfirmed = await showConfirm({
+      message: '確定要刪除此特別日期設定嗎？',
+      type: 'warning'
+    })
+    if (!isConfirmed) return
     const res = await deleteOverride(uid)
     if (res.success) {
       setOverrides(prev => prev.filter(o => o.uid !== uid))
     } else {
-      alert('刪除失敗')
+      showAlert({ message: '刪除失敗', type: 'error' })
     }
   }
 
@@ -192,7 +198,7 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
     }
 
     if (isNew) {
-      alert('請先儲存主時程模板後再設定特別日期。')
+      showAlert({ message: '請先儲存主時程模板後再設定特別日期。', type: 'warning' })
       setIsSavingOverride(false)
       return
     }
@@ -217,7 +223,7 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
       }
       setIsModalOpen(false)
     } else {
-      alert('儲存失敗: ' + res.message)
+      showAlert({ message: '儲存失敗: ' + res.message, type: 'error' })
     }
     setIsSavingOverride(false)
   }

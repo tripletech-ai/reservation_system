@@ -10,9 +10,11 @@ import {
 } from 'lucide-react'
 import type { EventEditFormProps } from '@/types'
 import { saveEvent } from '@/app/actions/events'
+import { useAlert } from '@/components/ui/DialogProvider'
 
 export default function EventEditForm({ id, managerUid, managerWebsiteName, initialEvent, menus }: EventEditFormProps) {
   const router = useRouter()
+  const { showAlert } = useAlert()
   const isNew = id === 'new'
   const [isSaving, setIsSaving] = useState(false)
 
@@ -49,14 +51,14 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
   }
 
   const handleSaveOptions = () => {
-    if (!tempOptions.name.trim()) return alert('請輸入選單分類名稱')
-    if (tempOptions.items.length === 0) return alert('請至少新增一個服務項目')
+    if (!tempOptions.name.trim()) return showAlert({ message: '請輸入選單分類名稱', type: 'warning' })
+    if (tempOptions.items.length === 0) return showAlert({ message: '請至少新增一個服務項目', type: 'warning' })
     setOptions(tempOptions)
     setIsModalOpen(false)
   }
 
   const handleSave = async () => {
-    if (!title.trim()) return alert('請輸入活動標題')
+    if (!title.trim()) return showAlert({ message: '請輸入活動標題', type: 'warning' })
 
     setIsSaving(true)
     const payload = {
@@ -77,7 +79,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
       router.push('/events')
       router.refresh()
     } else {
-      alert('儲存失敗: ' + res.message)
+      showAlert({ message: '儲存失敗: ' + res.message, type: 'error' })
     }
     setIsSaving(false)
   }

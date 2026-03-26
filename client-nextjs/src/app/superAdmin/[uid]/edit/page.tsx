@@ -15,6 +15,7 @@ import {
 import { getSuperSession } from '@/app/actions/superAuth'
 import { useSuperAdmin } from '../../SuperAdminContext'
 import { NotifyEntry, QItem } from '@/types'
+import { useAlert } from '@/components/ui/DialogProvider'
 
 
 function LineNotifyBuilder({
@@ -410,6 +411,7 @@ export default function ManagerEditPage() {
   const router = useRouter()
   const params = useParams()
   const isNew = params.uid === 'new'
+  const { showAlert } = useAlert()
 
   const [manager, setManager] = useState<any>(null)
   const [loading, setLoading] = useState(!isNew)
@@ -458,7 +460,7 @@ export default function ManagerEditPage() {
     if (res.success) {
       router.push('/superAdmin')
     } else {
-      alert(res.message || '儲存失敗')
+      showAlert({ message: res.message || '儲存失敗', type: 'error' })
     }
     setIsSaving(false)
   }

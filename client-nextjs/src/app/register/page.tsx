@@ -13,10 +13,12 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { registerMember } from '@/app/actions/members'
+import { useAlert } from '@/components/ui/DialogProvider'
 
 export default function RegisterPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { showAlert } = useAlert()
 
   // -- Params from URL --
   const line_uid = searchParams.get('line_uid') || ''
@@ -111,11 +113,11 @@ export default function RegisterPage() {
         // Redirect back with replacement to avoid back-button loop to register page
         router.replace(return_url)
       } else {
-        alert(res.message || '註冊失敗，請重試！')
+        showAlert({ message: res.message || '註冊失敗，請重試！', type: 'error' })
       }
     } catch (error) {
       console.error(error)
-      alert('系統發生錯誤，請稍後再試。')
+      showAlert({ message: '系統發生錯誤，請稍後再試。', type: 'error' })
     } finally {
       setIsSubmitting(false)
     }

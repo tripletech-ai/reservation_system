@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Phone, Mail, ExternalLink, X, ChevronLeft, ChevronRight, User, Calendar, Clock, Tag, DollarSign, Ban, CheckCircle2, Loader2 } from 'lucide-react'
 import type { Booking, BookingListProps } from '@/types'
+import { useAlert } from '@/components/ui/DialogProvider'
 import { cancelBooking, updateBookingDepositStatus } from '@/app/actions/bookings'
 import { BOOKING_STATUS, TIME_SLOT_INTERVAL } from '@/constants/common'
 import dayjs from 'dayjs';
@@ -24,6 +25,7 @@ export default function BookingList({
   const [isSaving, setIsSaving] = useState(false)
   const [tempDepositStatus, setTempDepositStatus] = useState<boolean>(false)
   const router = useRouter()
+  const { showAlert, showConfirm } = useAlert()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -62,7 +64,13 @@ export default function BookingList({
 
   const handleCancel = async (deleteType: number = 1) => {
     if (!selectedBooking) return
-    if (!confirm('確定要取消此預約嗎？')) return
+    const isConfirmed = await showConfirm({
+      message: '確定要取消此預約嗎？',
+      type: 'warning',
+      confirmText: '確定取消',
+      cancelText: '保留預約'
+    })
+    if (!isConfirmed) return
 
     setIsCancelling(true)
     // -- 0: 備份並刪除
@@ -71,7 +79,7 @@ export default function BookingList({
       setSelectedBooking(null)
       router.refresh()
     } else {
-      alert('操作失敗: ' + (res.message || '未知錯誤'))
+      showAlert({ message: '操作失敗: ' + (res.message || '未知錯誤'), type: 'error' })
     }
     setIsCancelling(false)
   }
@@ -84,7 +92,7 @@ export default function BookingList({
       setSelectedBooking({ ...selectedBooking, is_deposit_received: tempDepositStatus })
       router.refresh()
     } else {
-      alert('儲存失敗: ' + (res.message || '未知錯誤'))
+      showAlert({ message: '儲存失敗: ' + (res.message || '未知錯誤'), type: 'error' })
     }
     setIsSaving(false)
   }

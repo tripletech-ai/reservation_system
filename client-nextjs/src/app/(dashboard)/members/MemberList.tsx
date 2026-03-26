@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Phone, Mail, ExternalLink, X, ChevronLeft, ChevronRight, User, Calendar, MessageSquare, ShieldCheck } from 'lucide-react'
 import type { Member, MemberListProps } from '@/types'
+import { useAlert } from '@/components/ui/DialogProvider'
 
 
 export default function MemberList({
@@ -19,6 +20,7 @@ export default function MemberList({
   const [isUpdating, setIsUpdating] = useState(false)
   const [searchValue, setSearchValue] = useState(initialSearch)
   const router = useRouter()
+  const { showAlert } = useAlert()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -78,11 +80,11 @@ export default function MemberList({
         setSelectedMember(null)
         router.refresh()
       } else {
-        alert('更新失敗')
+        showAlert({ message: '更新失敗', type: 'error' })
       }
     } catch (err) {
       console.error(err)
-      alert('網路錯誤')
+      showAlert({ message: '網路錯誤', type: 'error' })
     } finally {
       setIsUpdating(false)
     }

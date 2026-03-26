@@ -6,10 +6,12 @@ import { Plus, Clock, Edit2, Trash2, ExternalLink, Search, Box } from 'lucide-re
 import type { EventListProps } from '@/types'
 import { deleteEvent } from '@/app/actions/events'
 import { useRouter } from 'next/navigation'
+import { useAlert } from '@/components/ui/DialogProvider'
 
 
 export default function EventList({ events, menus, managerUid, managerWebsiteName }: EventListProps) {
   const router = useRouter()
+  const { showAlert, showConfirm } = useAlert()
   const [searchTerm, setSearchTerm] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
@@ -19,13 +21,19 @@ export default function EventList({ events, menus, managerUid, managerWebsiteNam
   )
 
   const handleDelete = async (uid: string) => {
-    if (!confirm('確定要刪除此預約活動嗎？此操作不可復原。')) return
+    const isConfirmed = await showConfirm({
+      message: '確定要刪除此預約活動嗎？此操作不可復原。',
+      type: 'warning',
+      confirmText: '確定刪除',
+      cancelText: '取消'
+    })
+    if (!isConfirmed) return
     setIsDeleting(uid)
     const res = await deleteEvent(uid)
     if (res.success) {
       router.refresh()
     } else {
-      alert('刪除失敗: ' + res.message)
+      showAlert({ message: '刪除失敗: ' + res.message, type: 'error' })
     }
     setIsDeleting(null)
   }

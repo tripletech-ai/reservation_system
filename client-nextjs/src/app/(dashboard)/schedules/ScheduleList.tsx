@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Calendar, Clock, Edit2, Trash2, ArrowRight, Loader2 } from 'lucide-react'
 import type { ScheduleMenu } from '@/types'
 import { createScheduleMenu, deleteScheduleMenu } from '@/app/actions/schedules'
+import { useAlert } from '@/components/ui/DialogProvider'
 
 interface ScheduleListProps {
   menus: ScheduleMenu[]
@@ -14,17 +15,24 @@ interface ScheduleListProps {
 
 export default function ScheduleList({ menus, managerUid }: ScheduleListProps) {
   const router = useRouter()
+  const { showAlert, showConfirm } = useAlert()
   const [isCreating, setIsCreating] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
   const handleDelete = async (uid: string) => {
-    if (!confirm('確定要刪除此排程模板嗎？此操作不可復原。')) return
+    const isConfirmed = await showConfirm({
+      message: '確定要刪除此排程模板嗎？此操作不可復原。',
+      type: 'warning',
+      confirmText: '確定刪除',
+      cancelText: '取消'
+    })
+    if (!isConfirmed) return
     setIsDeleting(uid)
     const res = await deleteScheduleMenu(uid)
     if (res.success) {
       router.refresh()
     } else {
-      alert('刪除失敗: ' + (res.message || '未知錯誤'))
+      showAlert({ message: '刪除失敗: ' + (res.message || '未知錯誤'), type: 'error' })
     }
     setIsDeleting(null)
   }
@@ -35,7 +43,7 @@ export default function ScheduleList({ menus, managerUid }: ScheduleListProps) {
     if (res.success && res.uid) {
       router.push(`/schedules/${res.uid}`)
     } else {
-      alert('建立失敗: ' + (res.message || '未知錯誤'))
+      showAlert({ message: '建立失敗: ' + (res.message || '未知錯誤'), type: 'error' })
     }
     setIsCreating(false)
   }
