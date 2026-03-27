@@ -1,6 +1,7 @@
 import { getBookingInfo } from '@/services/data'
 import { notFound, redirect } from 'next/navigation'
 import BookingClient from './BookingClient'
+import LiffInitializer from '@/components/line/LiffInitializer'
 import { BookingClientProps } from '@/types';
 
 type Props = {
@@ -11,6 +12,11 @@ type Props = {
 export default async function BookingPage({ params, searchParams }: Props) {
   const { websiteName, dynamicUrl } = await params
   const { schedule_menu_uid, line_uid } = await searchParams
+
+  // // 1. 如果 URL 缺少 line_uid，則先進入 Client Side 的 LIFF 初始化與身分確認
+  // if (!line_uid) {
+  //   return <LiffInitializer />
+  // }
 
   const data = await getBookingInfo(websiteName, dynamicUrl, schedule_menu_uid, line_uid)
   if (!data) {

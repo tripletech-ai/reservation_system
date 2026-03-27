@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@line/liff": "^2.28.0",
+    "@line/liff-mock": "^1.0.4",
     "@supabase/supabase-js": "^2.99.3",
     "dayjs": "^1.11.20",
     "framer-motion": "^12.38.0",
