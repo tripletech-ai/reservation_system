@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase'
+import { Manager } from '@/types'
 import { cookies } from 'next/headers'
 import { cache } from 'react'
 
@@ -10,7 +11,7 @@ export async function verifyManagerLogin(account: string, password: string) {
   try {
     const { data: user, error } = await supabaseAdmin
       .from('manager')
-      .select('uid, name,account, logo_url, website_name, questionnaire')
+      .select('uid, name,account, logo_url, website_name, questionnaire, google_calendar_id')
       .eq('account', account)
       .eq('password', password)
       .single()
@@ -22,7 +23,7 @@ export async function verifyManagerLogin(account: string, password: string) {
     return {
       success: true,
       message: '登入成功',
-      user: { uid: user.uid, name: user.name, account: user.account, logo_url: user.logo_url, website_name: user.website_name, questionnaire: user.questionnaire }
+      user: user as Manager
     }
   } catch (err) {
     console.error('Auth Service Error:', err)
@@ -39,7 +40,7 @@ export const getAuthSession = cache(async () => {
 
   try {
     const userData = JSON.parse(session)
-    return userData as { uid: string, name: string, account: string, logo_url: string, website_name: string, questionnaire: string }
+    return userData as Manager
   } catch {
     return null
   }

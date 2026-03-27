@@ -18,7 +18,8 @@ export default function BookingList({
   totalCount,
   currentPage,
   pageSize,
-  initialSearch
+  initialSearch,
+  session
 }: BookingListProps) {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [searchValue, setSearchValue] = useState(initialSearch)
@@ -75,7 +76,7 @@ export default function BookingList({
 
     setIsCancelling(true)
     // -- 0: 備份並刪除
-    const res = await cancelBooking(selectedBooking.uid, TIME_SLOT_INTERVAL, 0)
+    const res = await cancelBooking(selectedBooking.uid, session, TIME_SLOT_INTERVAL, 0)
     if (res.success) {
       setSelectedBooking(null)
       router.refresh()

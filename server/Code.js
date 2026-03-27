@@ -1,9 +1,9 @@
-/**
- * 處理網頁應用程式的 GET 請求
- */
-function doGet(e) {
-    return null;
-}
+// /**
+//  * 處理網頁應用程式的 GET 請求
+//  */
+// function doGet(e) {
+//     return null;
+// }
 
 /**
  * 接收來自 Next.js / Edge Function 的 POST 請求

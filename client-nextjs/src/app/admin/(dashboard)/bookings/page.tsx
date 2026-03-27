@@ -62,6 +62,7 @@ export default async function BookingsPage({
         currentPage={page}
         pageSize={pageSize}
         initialSearch={q}
+        session={session}
       />
     </div>
   )

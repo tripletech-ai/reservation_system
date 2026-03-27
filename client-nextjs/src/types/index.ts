@@ -17,6 +17,7 @@ export type Manager = {
   logo_url: string
   website_name: string
   questionnaire: string
+  google_calendar_id: string
 }
 
 
@@ -48,7 +49,8 @@ export interface BookingListProps {
   totalCount: number
   currentPage: number
   pageSize: number
-  initialSearch: string
+  initialSearch: string,
+  session: Manager
 }
 
 

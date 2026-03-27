@@ -1,5 +1,5 @@
 /**
- * Google 日曆整合服務
+ * Google 日曆整合服務v0.0.1
  */
 const CalendarService = {
 
@@ -11,7 +11,7 @@ const CalendarService = {
         const calId = googleCalendarId;
         if (!calId) return null;
 
-        const calendar = CalendarApp.getCalendarById(calId);
+        const calendar = CalendarApp.getCalendarById(calId) || CalendarApp.getDefaultCalendar();
         if (!calendar) return null;
 
         const startTime = new Date(bookingData.booking_start_time.replace(/-/g, '/'));
@@ -34,7 +34,7 @@ const CalendarService = {
         const calId = googleCalendarId;
         if (!calId || !eventId) return;
 
-        const calendar = CalendarApp.getCalendarById(calId);
+        const calendar = CalendarApp.getCalendarById(calId) || CalendarApp.getDefaultCalendar();
         const event = calendar.getEventById(eventId);
         if (!event) return;
 
@@ -56,7 +56,7 @@ const CalendarService = {
         const calId = googleCalendarId;
         if (!calId || !eventId) return;
 
-        const calendar = CalendarApp.getCalendarById(calId);
+        const calendar = CalendarApp.getCalendarById(calId) || CalendarApp.getDefaultCalendar();
         const event = calendar.getEventById(eventId);
         if (event) event.deleteEvent();
     }

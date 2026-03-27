@@ -3,6 +3,7 @@
 import { BOOKING_STATUS } from '@/constants/common'
 import { GoogleCalendarService } from '@/lib/google_calendar'
 import { supabaseAdmin, SUPABASE_EDGE_FUNCTION } from '@/lib/supabase'
+import { Manager } from '@/types'
 import { nanoid } from 'nanoid'
 import { revalidatePath } from 'next/cache'
 
@@ -27,18 +28,17 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
         p_time_slot_interval: timeSlotInterval
       })
 
-    console.log("payload", payload)
-    console.log("result", result)
-    console.log("error", error)
+
     if (error) throw error
 
     if (!result.booking_success) {
       return { success: false, message: result.msg }
     }
 
+
     if (result.google_calendar_id) {
 
-      await GoogleCalendarService.sync({
+      const google_calendar_event_id = await GoogleCalendarService.sync({
         action: 'CREATE',
         googleCalendarId: result.google_calendar_id,
         data: {
@@ -51,6 +51,10 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
           line_uid: payload.line_uid || result.line_uid
         }
       })
+      console.log("google_calendar_event_id", google_calendar_event_id)
+      await supabaseAdmin.from('booking').update({
+        google_calendar_event_id: google_calendar_event_id
+      }).eq('uid', result.booking_uid)
     }
 
     if (result.line_uid && result.line_channel_access_token) {
@@ -82,8 +86,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
 }
 
 
-
-export async function cancelBooking(bookingUid: string, timeSlotInterval: number, deleteType: number) {
+export async function cancelBooking(bookingUid: string, session: Manager, timeSlotInterval: number, deleteType: number) {
   try {
     const { data: result, error } = await supabaseAdmin.rpc('cancel_booking', {
       _booking_uid: bookingUid,
@@ -91,7 +94,21 @@ export async function cancelBooking(bookingUid: string, timeSlotInterval: number
       _delete_type: deleteType
     })
 
-    if (error) throw error
+    if (error || !result.success) {
+      return { success: false, message: result.error || error }
+    }
+
+    console.log("result", result)
+    console.log("googleCalendarId", session)
+    if (result.data?.google_calendar_event_id) {
+
+      console.log("eventId", result.data.google_calendar_event_id)
+      await GoogleCalendarService.sync({
+        action: 'DELETE',
+        googleCalendarId: session.google_calendar_id,
+        eventId: result.data.google_calendar_event_id
+      })
+    }
 
     revalidatePath('/bookings')
     return { success: true, message: result?.msg || '取消成功' }
