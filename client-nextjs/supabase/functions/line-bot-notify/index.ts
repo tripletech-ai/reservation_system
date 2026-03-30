@@ -52,8 +52,16 @@ Deno.serve(async (req) => {
 
     console.log("responseText bookingHistory:", responseText);
 
+
+    const replyData = {
+      accessToken: managerData.line_channel_access_token,
+      lineUid: line_uid,
+      textBody: responseText,
+      searchData: searchData
+    }
+
     // 3. 發送回覆給 Line
-    await LineService.push(managerData.line_channel_access_token, line_uid, responseText);
+    await LineService.push(supabase, replyData);
 
     return new Response(JSON.stringify({ message: "success" }), {
       headers: { "Content-Type": "application/json" },

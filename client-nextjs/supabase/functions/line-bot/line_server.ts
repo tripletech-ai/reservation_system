@@ -1,3 +1,14 @@
+import dayjs from "https://esm.sh/dayjs@1.11.10";
+import utc from "https://esm.sh/dayjs@1.11.10/plugin/utc";
+import timezone from "https://esm.sh/dayjs@1.11.10/plugin/timezone";
+
+// 註冊插件
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+
+
+
 /**
  * LINE 訊息服務 (Supabase Edge Function / Deno 版本)
  */
@@ -5,23 +16,33 @@ export const LineService = {
     /**
      * 回覆訊息 (Reply Message)
      */
-    reply: async function (accessToken: string, replyToken: string, messages: any) {
+    reply: async function (supabase?: any, replyData?: any) {
+        const { accessToken, replyToken, textBody, searchData, procedureData } = replyData;
         if (!accessToken || !replyToken) return;
+
+        const messages: any[] = [];
+
+        // 1. 基本文字訊息
+        if (textBody) {
+            messages.push({
+                type: "text",
+                text: textBody
+            });
+        }
+
+        // 2. 判斷是否需要 Flex Message (基於 searchData 和資料庫)
+        if (searchData && supabase) {
+            const flexMsg = await getFlexMessage(supabase, searchData, procedureData);
+            if (flexMsg) {
+                messages.push(flexMsg);
+            }
+        }
 
         const payload = {
             replyToken: replyToken,
-            messages: [
-                // 第一筆：文字訊息
-                {
-                    type: "text",
-                    text: messages || ""
-                },
-                // 第二筆：Flex Message 物件
-
-            ]
+            messages: messages.slice(0, 5) // LINE 限制最多 5 筆
         };
 
-        // 將 UrlFetchApp.fetch 改為標準 fetch
         const response = await fetch("https://api.line.me/v2/bot/message/reply", {
             method: "POST",
             headers: {
@@ -37,13 +58,33 @@ export const LineService = {
     /**
      * 主動推播訊息 (Push Message)
      */
-    push: async function (accessToken: string, lineUid: string, messages: any) {
-        if (!lineUid || !accessToken) return;
+    push: async function (supabase?: any, replyData?: any) {
+        const { accessToken, lineUid, textBody, searchData } = replyData;
+        if (!accessToken || !lineUid) return;
+
+        const messages: any[] = [];
+
+        // 1. 基本文字訊息
+        if (textBody) {
+            messages.push({
+                type: "text",
+                text: textBody
+            });
+        }
+
+        // 2. 判斷是否需要 Flex Message (基於 searchData 和資料庫)
+        if (searchData && supabase) {
+            const flexMsg = await getFlexMessage(supabase, searchData, null);
+            if (flexMsg) {
+                messages.push(flexMsg);
+            }
+        }
 
         const payload = {
-            to: lineUid,
-            messages: Array.isArray(messages) ? messages : [{ type: "text", text: messages }],
+            messages: messages.slice(0, 5)
         };
+
+
 
         const response = await fetch("https://api.line.me/v2/bot/message/push", {
             method: "POST",
@@ -60,15 +101,65 @@ export const LineService = {
 
 
 
-//預約歷史紀錄
-//我要預約
-const createBookingHistoryFlex = (rawBookings) => {
-    // 1. 資料清洗：將資料從 {"line_get_booking_history": { ... }} 提取出來
-    const bookings = rawBookings?.map(item => item.line_get_booking_history) || [];
+/**
+ * 主控：根據 searchData 的配置，決定回傳哪種 Flex Message
+ */
+const getFlexMessage = async (supabase: any, searchData: any, procedureData?: any) => {
+    // 取得所有程序配置以便查找按鈕 Label
+    const allProcedures = await getLineNotifyProcedureData(supabase);
+    if (!allProcedures) return null;
+
+    // 找到當前執行程序的完整配置 (包含 flex_message_type)
+    const currentConfig = allProcedures.find((p: any) => p.procedure_name === searchData.procedure_name);
+    const flexType = currentConfig?.flex_message_type;
+
+    let flex = null;
+
+    switch (flexType) {
+        case 2:
+            flex = createBookingHistoryFlex(searchData.data, procedureData);
+            break;
+        case 1:
+            flex = createBookingFlex_(searchData.data, procedureData);
+            break;
+        default:
+            break;
+    }
+
+    // 2. 如果 searchData 沒觸發主體 Flex，但有 more_keys，則發送快速選單
+    if (!flex && searchData.more_keys && searchData.more_keys.length > 0) {
+        flex = createQuickActionsFlex_(searchData.more_keys);
+    }
+
+    return flex;
+}
+
+
+
+const getLineNotifyProcedureData = async (supabase: any) => {
+
+    const { data: managerData, error } = await supabase
+        .from("line_notify_procedure")
+        .select("*");
+
+    if (error) {
+        console.error("查詢 Manager 失敗:", error);
+        return null;
+    }
+    return managerData;
+};
+
+
+
+
+//預約歷史紀錄 flex_message_type = 2
+const createBookingHistoryFlex = (rawBookings: any, procedureData?: any) => {
+    const bookings = rawBookings?.map((item: any) => item.line_get_booking_history) || [];
 
     if (bookings.length === 0) {
+        const buttons = createButtons_(rawBookings.no_data_keys);
         return {
-            "type": "flex", "alt_text": "您目前沒有預約紀錄。",
+            "type": "flex", "altText": "您目前沒有預約紀錄。",
             "contents": {
                 "type": "bubble",
                 "body": {
@@ -79,58 +170,45 @@ const createBookingHistoryFlex = (rawBookings) => {
                     ]
                 },
                 "footer": {
-                    "type": "box", "layout": "vertical",
-                    "contents": [{ "type": "button", "style": "primary", "color": "#1877F2", "action": { "type": "message", "label": "立即預約", "text": "我要預約" } }]
+                    "type": "box", "layout": "vertical", "spacing": "sm",
+                    // 如果 buttons 存在且有內容，才展開這個屬性
+                    ...(buttons && buttons.length > 0 ? { "contents": buttons } : {})
+
                 }
             }
         };
     }
 
-    const bubbles = bookings.map(b => {
-        // 簡單格式化時間：將 2026-03-30T11:30:00+00:00 轉為較易讀的格式
-        const formattedDate = b.booking_date.replace('T', ' ').substring(0, 16);
-
-        // 根據狀態決定 Header 顏色
-        const headerColor = b.status === '已取消' ? '#FF4B4B' : (b.status === '已完成' ? '#888888' : '#1877F2');
-        const statusText = statusMap[String(b.status)] || b.status;
+    const bubbles = procedureData.map((b: any) => {
+        const showTime = dayjs(b.booking_date).tz("Asia/Taipei").format("YYYY-MM-DD HH:mm");
+        const statusText = statusMap[String(b.status)] || { text: '', color: '' };
         return {
             "type": "bubble",
             "header": {
-                "type": "box", "layout": "vertical",
-                "backgroundColor": headerColor,
-                "contents": [
-                    { "type": "text", "text": `預約狀態：${statusText}`, "color": "#FFFFFF", "weight": "bold", "size": "md" }
-                ]
+                "type": "box", "layout": "vertical", "backgroundColor": statusText.color,
+                "contents": [{ "type": "text", "text": `預約狀態：${statusText.text}`, "color": "#FFFFFF", "weight": "bold", "size": "md" }]
             },
             "body": {
                 "type": "box", "layout": "vertical", "spacing": "md",
                 "contents": [
-                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "時間", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": formattedDate, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] },
-                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "服務", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": b.service_name, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] },
-                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "來源", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": b.source_table === 'current' ? '近期預約' : '歷史紀錄', "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] }
+                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "時間", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": showTime, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] },
+                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "服務", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": b.service_name, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] }
                 ]
             }
         };
     });
 
-    return {
-        "type": "flex",
-        "altText": `您有 ${bookings.length} 筆預約紀錄。`,
-        "contents": { "type": "carousel", "contents": bubbles }
-    };
+    return { "type": "flex", "altText": `預約紀錄`, "contents": { "type": "carousel", "contents": bubbles.slice(0, 10) } };
 }
 
 
-//取得預約資料(可以取消資料)
-// 取消預約 Flex Message 生成器
-function createBookingFlex_(rawBookings) {
-    // 1. 資料解構：提取出內層的 JSON 物件
-    const bookings = rawBookings?.map(item => item.line_get_booking_history) || [];
+//取得預約資料(可以取消資料) flex_message_type = 1
+function createBookingFlex_(rawBookings: any, no_data_keys: string[] = [], procedureData?: any) {
+    const bookings = rawBookings?.map((item: any) => item.line_get_booking_history) || [];
+    const cancellableBookings = bookings.filter((b: any) => String(b.status) === '1');
 
-    // 2. 過濾邏輯：通常「取消預約」清單只需要顯示 status = 1 (預約中) 且 source_table = 'current' 的項目
-    const cancellableBookings = bookings.filter(b => String(b.status) === '1');
-
-    if (!cancellableBookings || cancellableBookings.length === 0) {
+    if (cancellableBookings.length === 0) {
+        const buttons = createButtons_(no_data_keys);
         return {
             "type": "flex", "altText": "您目前沒有可取消的預約。",
             "contents": {
@@ -138,89 +216,56 @@ function createBookingFlex_(rawBookings) {
                 "body": {
                     "type": "box", "layout": "vertical", "spacing": "md", "contents": [
                         { "type": "text", "text": "查無可取消的預約", "weight": "bold", "size": "xl", "align": "center" },
-                        { "type": "text", "text": "您目前沒有任何可以取消的預約喔！", "wrap": true, "align": "center", "color": "#888888", "margin": "md" }
+                        { "type": "text", "text": "目前沒有任何可以取消的預約。", "wrap": true, "align": "center", "color": "#888888", "margin": "md" }
                     ]
+                },
+                "footer": {
+                    "type": "box", "layout": "vertical", "spacing": "sm",
+                    "contents": buttons
                 }
             }
         };
     }
+    let bubbles = []
+    if (procedureData) {
+        bubbles = cancellableBookings.map((b: any) => {
+            const showTime = dayjs(b.booking_date).tz("Asia/Taipei").format("YYYY-MM-DD HH:mm");
+            return {
+                "type": "bubble",
+                "header": {
+                    "type": "box", "layout": "vertical", "backgroundColor": "#D9534F",
+                    "contents": [{ "type": "text", "text": "選擇取消這筆預約", "color": "#FFFFFF", "weight": "bold", "size": "md" }]
+                },
+                "body": {
+                    "type": "box", "layout": "vertical", "spacing": "md",
+                    "contents": [
+                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "時間", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": showTime, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] },
+                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "服務", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": b.service_name || "未提供", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] }
+                    ]
+                },
+                "footer": {
+                    "type": "box", "layout": "vertical",
+                    "contents": [{ "type": "button", "style": "primary", "color": "#D9534F", "height": "sm", "action": { "type": "message", "label": "申請取消這筆", "text": `取消預約 ${b.uid}` } }]
+                }
+            };
+        });
+    } else {
+        return { "type": "flex", "altText": "系統忙碌中，請稍後再試" };
+    }
 
-    const bubbles = cancellableBookings.map(b => {
-        // 格式化日期顯示
-        const formattedDate = b.booking_date ? b.booking_date.replace('T', ' ').substring(0, 16) : '未知時間';
 
-        return {
-            "type": "bubble",
-            "header": {
-                "type": "box",
-                "layout": "vertical",
-                "backgroundColor": "#D9534F", // 警告紅
-                "contents": [
-                    { "type": "text", "text": "選擇取消這筆預約", "color": "#FFFFFF", "weight": "bold", "size": "md" }
-                ]
-            },
-            "body": {
-                "type": "box",
-                "layout": "vertical",
-                "spacing": "md",
-                "contents": [
-                    {
-                        "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "時間", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                            { "type": "text", "text": formattedDate, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                        ]
-                    },
-                    {
-                        "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "服務", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                            { "type": "text", "text": b.service_name || "未提供", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                        ]
-                    },
-                    {
-                        "type": "box", "layout": "baseline", "spacing": "sm", "contents": [
-                            { "type": "text", "text": "單號", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                            { "type": "text", "text": b.uid, "wrap": true, "color": "#888888", "size": "xs", "flex": 5 }
-                        ]
-                    }
-                ]
-            },
-            "footer": {
-                "type": "box",
-                "layout": "vertical",
-                "contents": [
-                    {
-                        "type": "button",
-                        "style": "primary",
-                        "color": "#D9534F",
-                        "height": "sm",
-                        "action": {
-                            "type": "message",
-                            "label": "確認取消這筆",
-                            // 這裡發送的文字必須符合你後端處理取消的 RegExp 或邏輯
-                            "text": `取消預約 ${b.uid}`
-                        }
-                    }
-                ]
-            }
-        };
-    });
-
-    return {
-        "type": "flex",
-        "altText": "請選擇您要取消的預約",
-        "contents": {
-            "type": "carousel",
-            "contents": bubbles
-        }
-    };
+    return { "type": "flex", "altText": "請選擇您要取消的預約", "contents": { "type": "carousel", "contents": bubbles.slice(0, 10) } };
 }
 
 
 //還需要其他服務嗎
-function createQuickActionsFlex_() {
+function createQuickActionsFlex_(more_keys: string[] = []) {
+    const buttons = createButtons_(more_keys);
+    if (buttons.length === 0) return null;
+
     return {
         "type": "flex",
-        "altText": "需要其他服務嗎？這裡有幾個常用功能供您選擇。",
+        "altText": "需要其他服務嗎？",
         "contents": {
             "type": "bubble",
             "body": {
@@ -228,28 +273,54 @@ function createQuickActionsFlex_() {
                 "layout": "vertical",
                 "contents": [
                     { "type": "text", "text": "需要其他服務嗎？", "weight": "bold", "size": "lg", "margin": "md" },
-                    { "type": "text", "text": "這裡有幾個常用功能供您選擇：", "size": "sm", "color": "#666666", "wrap": true, "margin": "md" }
+                    { "type": "text", "text": "您可以選擇以下功能：", "size": "sm", "color": "#666666", "wrap": true, "margin": "md" }
                 ]
             },
             "footer": {
-                "type": "box",
-                "layout": "vertical",
-                "spacing": "sm",
-                "contents": [
-                    { "type": "button", "style": "link", "height": "sm", "action": { "type": "message", "label": "查詢預約紀錄", "text": "預約紀錄" } },
-                    { "type": "button", "style": "link", "height": "sm", "action": { "type": "message", "label": "我想要取消預約", "text": "取消預約" } }
-                ],
-                "flex": 0
+                "type": "box", "layout": "vertical", "spacing": "sm",
+                "contents": buttons
             }
         }
     };
 }
 
+/**
+ * 通用工具：將關鍵字列轉為 LINE 按鈕物件
+ */
+function createButtons_(keys: string[]) {
+    if (!keys || keys.length === 0) return [];
+
+    // 將 key 陣列轉為按鈕物件
+    return keys.map(key => {
+        return {
+            "type": "button",
+            "style": "link",
+            "height": "sm",
+            "action": {
+                "type": "message",
+                "label": key,
+                "text": key
+            }
+        };
+    });
+}
+
 
 // 1. 定義 Map，Key 使用字串
-const statusMap: Record<string, string> = {
-    '1': '預約中',
-    '2': '完成',
-    '0': '取消預約'
+const statusMap: Record<string, { text: string, color: string }> = {
+    '1': {
+        text: '預約中',
+        color: '#1877F2'
+    },
+    '2': {
+        text: '完成',
+        color: '#888888'
+    },
+    '0': {
+        text: '取消預約',
+        color: '#FF4B4B'
+    }
 };
+
+
 

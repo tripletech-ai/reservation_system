@@ -56,9 +56,10 @@ Deno.serve(async (req) => {
         }
 
         console.log("responseText:", responseText);
+        let procedureData = []
         // --- 邏輯 A: 判斷是否需要呼叫 Procedure ---
         if (searchData && searchData.procedure_name) {
-          const procedureData = await executeProcedure(searchData, supabase, { lineId: lineId }) || [];
+          procedureData = await executeProcedure(searchData, supabase, { lineId: lineId }) || [];
           console.log("procedureData", procedureData)
           if (hasContent(procedureData) && searchData.has_text) {
             console.log("procedureData-un", procedureData)
@@ -70,8 +71,20 @@ Deno.serve(async (req) => {
 
 
         console.log("responseText bookingHistory:", responseText);
+
+
+        const replyData = {
+          accessToken: managerData.line_channel_access_token,
+          replyToken: replyToken,
+          responseText: responseText,
+          searchData: searchData,
+          procedureData: procedureData
+        }
+
         // 3. 發送回覆給 Line
-        await LineService.reply(managerData.line_channel_access_token, replyToken, responseText);
+        await LineService.reply(supabase, replyData);
+
+
         console.log("responseText line_channel_access_token:", managerData.line_channel_access_token);
         console.log("responseText replyToken:", managerData.replyToken);
         console.log("responseText responseText:", managerData.responseText);

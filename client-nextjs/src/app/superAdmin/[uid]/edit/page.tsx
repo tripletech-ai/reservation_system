@@ -16,6 +16,73 @@ import { getSuperSession } from '@/app/actions/superAuth'
 import { useSuperAdmin } from '../../SuperAdminContext'
 import { NotifyEntry, QItem } from '@/types'
 import { useAlert } from '@/components/ui/DialogProvider'
+import { supabaseAdmin } from '@/lib/supabase' // 引入供 Storage 使用
+
+
+// ─── 多選下拉選單組件 ──────────────────────────────────────────
+function MultiSelect({
+  label,
+  options,
+  selected,
+  onChange
+}: {
+  label: string,
+  options: string[],
+  selected: string[],
+  onChange: (v: string[]) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const toggle = (val: string) => {
+    if (selected.includes(val)) {
+      onChange(selected.filter(s => s !== val))
+    } else {
+      onChange([...selected, val])
+    }
+  }
+
+  return (
+    <div className="space-y-1.5 flex-1 min-w-[200px]">
+      <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest ml-1">{label}</label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full flex items-center justify-between px-4 py-2 bg-white/5 border rounded-xl text-[13px] font-bold transition-all ${isOpen ? 'border-emerald-500/50 ring-2 ring-emerald-500/10' : 'border-white/10'}`}
+        >
+          <span className="truncate">{selected.length > 0 ? `已選 ${selected.length} 項` : '請挑選...'}</span>
+          <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              <div className="fixed inset-0 z-[80]" onClick={() => setIsOpen(false)} />
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="absolute left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-2 z-[90] max-h-48 overflow-y-auto custom-scrollbar"
+              >
+                {options.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => toggle(opt)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all mb-1 ${selected.includes(opt) ? 'bg-emerald-500/10 text-emerald-400' : 'hover:bg-white/5 text-slate-400'}`}
+                  >
+                    <span className="text-ms font-bold">{opt}</span>
+                    {selected.includes(opt) && <Check size={14} />}
+                  </button>
+                ))}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  )
+}
 
 
 function LineNotifyBuilder({
@@ -44,6 +111,7 @@ function LineNotifyBuilder({
             index={i}
             entry={entry}
             procedures={notifyProcedures}
+            allKeys={value.map(v => v.key).filter(k => k.trim())}
             onUpdate={update}
             onRemove={() => remove(i)}
           />
@@ -60,28 +128,27 @@ function LineNotifyBuilder({
   )
 }
 
-function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove }: any) {
+function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allKeys }: any) {
   const [isOpen, setIsOpen] = useState(false)
 
   const defaultColumnsJson = [
-    { key: 'line_uid', value: 'line_uid' },
-    // { key: 'name', value: '姓名' },
-    // { key: 'phone', value: '電話' },
-    // { key: 'email', value: 'Email' },
-    // { key: 'service_item', value: '服務項目' },
-    // { key: 'booking_start_time', value: '預約開始時間' },
-    // { key: 'booking_end_time', value: '預約結束時間' },
-    // { key: 'status', value: '狀態' },
+    'line_uid'
   ]
 
-  const newProcedures = [{ uid: 0, name: '自訂義訊息', sample: '', has_text: true, key: '', columns_json: defaultColumnsJson }, ...procedures];
+  const newProcedures = [{ uid: 0, name: '自訂義訊息', sample: '', has_text: true, key: '' }, ...procedures];
   // 比對邏輯現在基於 name 和 sample (或內容屬性)
   const selectedProc = newProcedures.find((p: any) =>
     p.uid === entry.uid
   )
 
+  if (selectedProc?.columns_json && typeof selectedProc.columns_json === 'string') {
+    try {
+      selectedProc.columns_json = JSON.parse(selectedProc.columns_json);
+    } catch (e) {
+      console.error("JSON 解析失敗:", e);
+    }
+  }
 
-  console.log("newProcedures", newProcedures)
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -164,8 +231,6 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove }: any) {
       </div>
 
       {(!selectedProc || selectedProc.has_text) && (<>
-
-
         <div className="flex flex-wrap gap-2">
           {/* 1. 靜態預設的欄位 */}
           {defaultColumnsJson.map((item, index) => (
@@ -174,13 +239,13 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove }: any) {
               // 移除 group-hover:，直接使用 text-emerald-400 (或 green-400)
               className="text-[14px] bg-emerald-500/10 border border-emerald-500/20 rounded-md px-2 py-0.5 font-bold text-emerald-400 transition-colors"
             >
-              {`{${item.key}}`}
+              {`{${item}}`}
             </span>
           ))}
 
           {/* 2. 動態從 JSON 字串解析出來的欄位 */}
           {selectedProc?.columns_json &&
-            JSON.parse(selectedProc.columns_json).map((item: string, index: number) => (
+            selectedProc.columns_json.map((item: string, index: number) => (
               <span
                 key={`dynamic-${index}`}
                 className="text-[14px] bg-emerald-500/10 border border-emerald-500/20 rounded-md px-2 py-0.5 font-bold text-emerald-400 transition-colors"
@@ -189,8 +254,10 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove }: any) {
               </span>
             ))
           }
-        </div>
 
+
+        </div>
+        <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest ml-1">回覆內容</label>
         <textarea
           value={entry.value}
           onChange={(e) => onUpdate(index, { value: e.target.value })}
@@ -198,8 +265,28 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove }: any) {
           rows={5}
           className="w-full bg-white/[0.02] border border-white/[0.07] rounded-xl py-3 px-4 text-xm text-slate-300 focus:outline-none focus:border-emerald-500/30 transition-all resize-y font-medium"
         />
+
+        <div className="flex flex-wrap gap-4 mt-2">
+          {/* 需要其他服務嗎？ */}
+          <MultiSelect
+            label="需要其他服務嗎？"
+            options={allKeys}
+            selected={entry.more_keys || []}
+            onChange={(v) => onUpdate(index, { more_keys: v })}
+          />
+        </div>
       </>
 
+      )}
+
+      {/* 未有資料時關鍵字（僅當 has_text 為 false 時顯示） */}
+      {!selectedProc?.has_text && (
+        <MultiSelect
+          label="未有資料時關鍵字"
+          options={allKeys}
+          selected={entry.no_data_keys || []}
+          onChange={(v) => onUpdate(index, { no_data_keys: v })}
+        />
       )}
     </motion.div>
   )
@@ -418,6 +505,8 @@ export default function ManagerEditPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [questionnaire, setQuestionnaire] = useState<QItem[]>([])
   const [notifyEntries, setNotifyEntries] = useState<NotifyEntry[]>([])
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string>('')
 
   useEffect(() => {
     async function init() {
@@ -435,6 +524,7 @@ export default function ManagerEditPage() {
       if (!found) { router.push('/superAdmin'); return }
 
       setManager(found)
+      setLogoPreview(found.logo_url)
       try {
         const raw = found.questionnaire
         const q = typeof raw === 'string' ? JSON.parse(raw || '[]') : (Array.isArray(raw) ? raw : [])
@@ -450,19 +540,48 @@ export default function ManagerEditPage() {
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSaving(true)
-    const formData = new FormData(e.currentTarget)
-    const payload: any = Object.fromEntries(formData.entries())
-    if (!isNew) payload.uid = manager.uid
-    payload.questionnaire = JSON.stringify(questionnaire)
-    payload.line_notify_content = entriesToJson(notifyEntries)
-    console.log(notifyEntries)
-    const res = await upsertManager(payload)
-    if (res.success) {
-      router.push('/superAdmin')
-    } else {
-      showAlert({ message: res.message || '儲存失敗', type: 'error' })
+
+    try {
+      const formData = new FormData(e.currentTarget)
+      const payload: any = Object.fromEntries(formData.entries())
+
+      // ─── 手動處理 Logo 上傳至 Supabase ──────────────────────────
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop()
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+        const filePath = `logos/${fileName}`
+
+        const { error: uploadError } = await supabaseAdmin.storage
+          .from('logos')
+          .upload(filePath, logoFile)
+
+        if (uploadError) throw new Error(`Logo 上傳失敗: ${uploadError.message}`)
+
+        const { data: { publicUrl } } = supabaseAdmin.storage
+          .from('logos')
+          .getPublicUrl(filePath)
+
+        payload.logo_url = publicUrl
+      } else {
+        payload.logo_url = logoPreview // 保留原有的 URL
+      }
+
+      if (!isNew) payload.uid = manager.uid
+      payload.questionnaire = JSON.stringify(questionnaire)
+      payload.line_notify_content = entriesToJson(notifyEntries)
+
+      const res = await upsertManager(payload)
+      if (res.success) {
+        router.push('/superAdmin')
+      } else {
+        showAlert({ message: res.message || '儲存失敗', type: 'error' })
+      }
+    } catch (err: any) {
+      console.error(err)
+      showAlert({ message: err.message || '發生未知錯誤', type: 'error' })
+    } finally {
+      setIsSaving(false)
     }
-    setIsSaving(false)
   }
 
   if (loading) {
@@ -537,8 +656,33 @@ export default function ManagerEditPage() {
             <Field label="專屬網址碼">
               <input name="website_name" defaultValue={manager?.website_name} required className={`${inputCls} font-mono`} />
             </Field>
-            <Field label="Logo 連結">
-              <input name="logo_url" defaultValue={manager?.logo_url} className={`${inputCls} font-mono`} />
+            <Field label="Logo 上傳">
+              <div className="space-y-3">
+                <div className="flex items-center gap-4">
+                  {logoPreview && (
+                    <div className="w-12 h-12 bg-white/5 rounded-xl border border-white/10 overflow-hidden shrink-0">
+                      <img src={logoPreview} className="w-full h-full object-cover" alt="Preview" />
+                    </div>
+                  )}
+                  <label className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setLogoFile(file)
+                          setLogoPreview(URL.createObjectURL(file))
+                        }
+                      }}
+                    />
+                    <div className="cursor-pointer bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-ms font-bold text-slate-400 hover:bg-white/10 transition-all text-center">
+                      {logoFile ? logoFile.name : '選取圖片檔案...'}
+                    </div>
+                  </label>
+                </div>
+              </div>
             </Field>
             <Field label="權限等級 (level)">
               <input name="level" type="number" defaultValue={manager?.level ?? 0} min={0} max={1} className={inputCls} />

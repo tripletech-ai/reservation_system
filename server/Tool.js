@@ -1,22 +1,36 @@
 /**
- * 通用 Log 工具：將訊息寫入 Google Sheet 的 "log" 分頁
- * @param {string} message - 要記錄的訊息內容
- * @param {string} level - 訊息等級 (例如：INFO, WARN, ERROR)，預設為 INFO
+ * 強化版 Log 工具：支援多參數輸入
+ * 呼叫範例：log("標題", "內容物件", "ERROR")
  */
-function log(message, level = "INFO") {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = ss.getSheetByName("logs");
+function log(...args) {
+    const ssId = "1UHsomTB7nn-3wEAGyr26xdEeDvGv1Y_B-wO7q8-_YAg";
+    const ss = SpreadsheetApp.openById(ssId);
+    let sheet = ss.getSheetByName("log") || ss.insertSheet("log");
 
-    // 如果找不到名為 "log" 的分頁，就自動建立一個
-    if (!sheet) {
-        sheet = ss.insertSheet("log");
-        sheet.appendRow(["時間", "層級", "內容"]); // 建立標題列
-        sheet.setFrozenRows(1); // 凍結首行
+    // 如果是新分頁，初始化標題
+    if (sheet.getLastRow() === 0) {
+        sheet.appendRow(["時間", "層級", "內容"]);
+        sheet.setFrozenRows(1);
     }
 
-    // 取得現在時間並寫入新行
-    const now = new Date();
-    const timestamp = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+    let level = "INFO";
+    let contentParts = [];
+
+    // 邏輯判斷：如果最後一個參數是特定的 Level 標籤（全大寫），則抽出來當 Level
+    const lastArg = args[args.length - 1];
+    const levels = ["INFO", "WARN", "ERROR", "SUCCESS", "DEBUG"];
+
+    if (args.length > 1 && typeof lastArg === "string" && levels.includes(lastArg.toUpperCase())) {
+        level = args.pop().toUpperCase();
+    }
+
+    // 將剩餘的所有參數轉為字串（物件會自動縮排）
+    contentParts = args.map(arg => {
+        return (typeof arg === 'object') ? JSON.stringify(arg, null, 2) : String(arg);
+    });
+
+    const message = contentParts.join(" | "); // 用分隔符號連起來
+    const timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
 
     sheet.appendRow([timestamp, level, message]);
 }

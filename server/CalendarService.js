@@ -14,10 +14,10 @@ const CalendarService = {
         const calendar = CalendarApp.getCalendarById(calId) || CalendarApp.getDefaultCalendar();
         if (!calendar) return null;
 
-        const startTime = new Date(bookingData.booking_start_time.replace(/-/g, '/'));
-        const endTime = new Date(bookingData.booking_end_time.replace(/-/g, '/'));
+        const startTime = new Date(bookingData.booking_start_time);
+        const endTime = new Date(bookingData.booking_end_time);
         const title = `預約: ${bookingData.name} - ${bookingData.service_item}`;
-        const description = `電話: ${bookingData.phone}\nLINE UID: ${bookingData.line_uid || '未提供'}`;
+        const description = `電話: ${bookingData.phone}\n`;
 
         const event = calendar.createEvent(title, startTime, endTime, {
             description: description,
@@ -39,8 +39,8 @@ const CalendarService = {
         if (!event) return;
 
         if (updatedData.booking_start_time && updatedData.booking_end_time) {
-            const start = new Date(updatedData.booking_start_time.replace(/-/g, '/'));
-            const end = new Date(updatedData.booking_end_time.replace(/-/g, '/'));
+            const start = new Date(updatedData.booking_start_time);
+            const end = new Date(updatedData.booking_end_time);
             event.setTime(start, end);
         }
 

@@ -192,5 +192,7 @@ export type NotifyEntry = {
   uid: string,
   has_text: boolean,
   procedure_name: string,
-  columns_json: string
+  columns_json: string,
+  next_service_keys?: string[],
+  no_data_keys?: string[]
 }
