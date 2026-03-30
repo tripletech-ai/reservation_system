@@ -96,7 +96,18 @@ function LineNotifyBuilder({
   onChange: (v: NotifyEntry[]) => void
 }) {
   const { notifyProcedures } = useSuperAdmin()
-  const add = () => onChange([...value, { key: '', value: '', sample: '', name: '', uid: '', has_text: true, procedure_name: '', columns_json: '' }])
+  const addEntry = () => {
+    onChange([...value, {
+      uid: 0,
+      key: '',
+      name: '自訂義訊息',
+      value: '',
+      sample: '',
+      has_text: true,
+      procedure_name: '',
+      columns_json: JSON.stringify(['line_uid'])
+    } as any])
+  }
   const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i))
   const update = (i: number, nextEntry: Partial<NotifyEntry>) => {
     const next = [...value]
@@ -122,7 +133,7 @@ function LineNotifyBuilder({
       </AnimatePresence>
       <button
         type="button"
-        onClick={add}
+        onClick={addEntry}
         className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-white/10 rounded-2xl text-ms text-slate-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all font-black uppercase tracking-widest"
       >
         <PlusCircle size={16} /> 新增關鍵字回覆
@@ -139,10 +150,8 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allKeys 
   ]
 
   const newProcedures = [{ uid: 0, name: '自訂義訊息', sample: '', has_text: true, key: '' }, ...procedures];
-  // 比對邏輯現在基於 name 和 sample (或內容屬性)
-  const selectedProc = newProcedures.find((p: any) =>
-    p.uid === entry.uid
-  )
+  // 比對邏輯：優先找 UID 匹配的，找不到則預設為第一筆
+  const selectedProc = newProcedures.find((p: any) => p.uid === entry.uid) || newProcedures[0];
 
   if (selectedProc?.columns_json && typeof selectedProc.columns_json === 'string') {
     try {
@@ -697,13 +706,6 @@ export default function ManagerEditPage() {
                     </div>
                   </label>
                 </div>
-                {logoPreview && (
-                  <div className="px-3 py-2 bg-black/20 border border-white/5 rounded-lg">
-                    <div className="text-[11px] font-mono text-emerald-400/80 break-all leading-relaxed bg-white/5 p-2 rounded">
-                      {logoPreview}
-                    </div>
-                  </div>
-                )}
               </div>
             </Field>
             <Field label="權限等級 (1:最高權限, 0:一般管理員)">

@@ -1,6 +1,7 @@
 'use server'
 
 import { BOOKING_STATUS } from '@/constants/common'
+import { ROUTES } from '@/constants/routes'
 import { GoogleCalendarService } from '@/lib/google_calendar'
 import { supabaseAdmin, SUPABASE_EDGE_FUNCTION } from '@/lib/supabase'
 import { Manager } from '@/types'
@@ -110,7 +111,7 @@ export async function cancelBooking(bookingUid: string, session: Manager, timeSl
       })
     }
 
-    revalidatePath('/bookings')
+    revalidatePath(ROUTES.ADMIN.BOOKINGS)
     return { success: true, message: result?.msg || '取消成功' }
   } catch (err: any) {
     console.error('cancelBooking Error:', err)
@@ -130,7 +131,7 @@ export async function updateBookingDepositStatus(uid: string, isDepositReceived:
 
     if (error) throw error
 
-    revalidatePath('/bookings')
+    revalidatePath(ROUTES.ADMIN.BOOKINGS)
     return { success: true }
   } catch (err: any) {
     console.error('updateBookingDepositStatus Error:', err)

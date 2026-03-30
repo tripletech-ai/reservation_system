@@ -108,7 +108,7 @@ export default function RegisterPage() {
       }
 
       const res = await registerMember(payload)
-      console.log(res)
+
       if (res.success) {
         // Redirect back with replacement to avoid back-button loop to register page
         router.replace(return_url)
@@ -124,7 +124,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center relative overflow-hidden font-sans pb-12">
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center relative overflow-x-hidden font-sans pb-12">
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full z-0 opacity-40">
         <div className="absolute -top-32 -right-32 w-[80vw] h-[80vw] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
@@ -137,10 +137,8 @@ export default function RegisterPage() {
             <User className="text-white w-10 h-10" />
           </div>
           <h1 className="text-3xl font-black text-white tracking-tight leading-tight uppercase">
-            成為特約會員 <br />
-            <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">開始您的預約</span>
+            成為會員 <br />
           </h1>
-          <p className="text-slate-300 text-xm mt-4 font-bold tracking-wide">只需填寫基本資料，即可享受專屬極致服務</p>
         </header>
 
         <motion.div

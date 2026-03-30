@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "./constant.ts";
 import { LineService } from "./line_server.ts";
+import { formatDateTime } from "./tool.ts";
 
 //npx supabase functions deploy line-bot --project-ref rqczzxaxyntjdyqifalj --no-verify-jwt
 
@@ -15,11 +16,13 @@ Deno.serve(async (req) => {
     }
 
     const payload = await req.json()
-    const { name, phone, email, service_item, booking_start_time, booking_end_time, line_uid, manager_id, action } = payload
+    const { name, phone, email, service_item, booking_start_time, booking_end_time, line_uid, manager_uid, action } = payload
+
+
     console.log("payload", payload)
 
     let responseText = "";
-    const managerData = await getManagerData(manager_id);
+    const managerData = await getManagerData(manager_uid);
     if (!managerData) {
       responseText = "查無此官方帳號";
     }
@@ -31,34 +34,34 @@ Deno.serve(async (req) => {
       console.log("JSON 解析失敗:", parseError);
       responseText = "系統資料格式錯誤。";
     }
-    console.log("notifyJson:", notifyJson)
+
     const searchData = notifyJson.find(item => item.key === action)
-    console.log("searchData:", searchData);
+
 
     //取得回復文字
     if (managerData) {
       responseText = getResponseText(searchData, managerData)
     }
 
-    console.log("responseText:", responseText);
 
 
     if (searchData && searchData.has_text) {
       responseText = replaceResponseText(responseText, {
         ...payload,
-        line_uid: line_uid
+        line_uid: line_uid,
+        booking_start_time: formatDateTime(booking_start_time),
+        booking_end_time: formatDateTime(booking_end_time)
       })
     }
-
-    console.log("responseText bookingHistory:", responseText);
-
 
     const replyData = {
       accessToken: managerData.line_channel_access_token,
       lineUid: line_uid,
-      textBody: responseText,
+      responseText: responseText,
       searchData: searchData
     }
+
+    console.log("replyData:", replyData);
 
     // 3. 發送回覆給 Line
     await LineService.push(supabase, replyData);

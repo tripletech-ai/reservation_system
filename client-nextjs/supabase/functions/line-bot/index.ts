@@ -21,19 +21,15 @@ Deno.serve(async (req) => {
     const { events } = await req.json();
     const lineId = events?.[0]?.source?.userId;
 
-    console.log("uid:", uid);
-    console.log("req:", req);
-    console.log("events:", events);
-    console.log("lineId:", lineId);
     // 2. 遍歷 Line 傳來的事件
     for (const event of events) {
       if (event.type === "message" && event.message.type === "text") {
         const userMsg = event.message.text.trim();
         const replyToken = event.replyToken;
         let responseText = "";
-        console.log("managerData in:");
+
         const managerData = await getManagerData(uid);
-        console.log("managerDataw:", managerData);
+
         if (!managerData) {
           responseText = "查無此官方帳號";
         }
@@ -46,7 +42,6 @@ Deno.serve(async (req) => {
         }
 
         const searchData = notifyJson.find(item => item.key === userMsg)
-        console.log("searchData:", searchData);
         //取得回復文字
         if (managerData) {
           responseText = getResponseText(searchData, {
@@ -55,22 +50,22 @@ Deno.serve(async (req) => {
           })
         }
 
-        console.log("responseText:", responseText);
+
         let procedureData = []
         // --- 邏輯 A: 判斷是否需要呼叫 Procedure ---
         if (searchData && searchData.procedure_name) {
           procedureData = await executeProcedure(searchData, supabase, { lineId: lineId }) || [];
-          console.log("procedureData", procedureData)
           if (hasContent(procedureData) && searchData.has_text) {
-            console.log("procedureData-un", procedureData)
             responseText = replaceResponseText(responseText, procedureData)
           } else {
             responseText = JSON.stringify(procedureData)
           }
         }
 
+        if (lineId) {
+          responseText = replaceResponseText(responseText, { line_uid: lineId })
+        }
 
-        console.log("responseText bookingHistory:", responseText);
 
 
         const replyData = {
@@ -83,11 +78,6 @@ Deno.serve(async (req) => {
 
         // 3. 發送回覆給 Line
         await LineService.reply(supabase, replyData);
-
-
-        console.log("responseText line_channel_access_token:", managerData.line_channel_access_token);
-        console.log("responseText replyToken:", managerData.replyToken);
-        console.log("responseText responseText:", managerData.responseText);
       }
     }
 

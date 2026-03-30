@@ -23,6 +23,7 @@ const callProcedure = async (procedureName: string, supabase: any, lineId: strin
     });
 
     console.log("callProcedure: ", data)
+    console.log("callProcedure: ", error)
     if (error) {
         return "";
     }

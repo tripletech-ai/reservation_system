@@ -1,12 +1,4 @@
-import dayjs from "https://esm.sh/dayjs@1.11.10";
-import utc from "https://esm.sh/dayjs@1.11.10/plugin/utc";
-import timezone from "https://esm.sh/dayjs@1.11.10/plugin/timezone";
-
-// 註冊插件
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-
+import { formatDateTime } from "./tool.ts";
 
 
 /**
@@ -17,16 +9,20 @@ export const LineService = {
      * 回覆訊息 (Reply Message)
      */
     reply: async function (supabase?: any, replyData?: any) {
-        const { accessToken, replyToken, textBody, searchData, procedureData } = replyData;
+        const { accessToken, replyToken, responseText, searchData, procedureData } = replyData;
         if (!accessToken || !replyToken) return;
 
         const messages: any[] = [];
 
         // 1. 基本文字訊息
-        if (textBody) {
+        if (responseText && searchData.has_text) {
+            let text = responseText
+            if (responseText === '[]' || responseText === '{}') {
+                text = "查無資料"
+            }
             messages.push({
                 type: "text",
-                text: textBody
+                text: text
             });
         }
 
@@ -59,16 +55,16 @@ export const LineService = {
      * 主動推播訊息 (Push Message)
      */
     push: async function (supabase?: any, replyData?: any) {
-        const { accessToken, lineUid, textBody, searchData } = replyData;
+        const { accessToken, lineUid, responseText, searchData } = replyData;
         if (!accessToken || !lineUid) return;
 
         const messages: any[] = [];
 
         // 1. 基本文字訊息
-        if (textBody) {
+        if (responseText) {
             messages.push({
                 type: "text",
-                text: textBody
+                text: responseText
             });
         }
 
@@ -81,6 +77,7 @@ export const LineService = {
         }
 
         const payload = {
+            to: lineUid,
             messages: messages.slice(0, 5)
         };
 
@@ -117,10 +114,10 @@ const getFlexMessage = async (supabase: any, searchData: any, procedureData?: an
 
     switch (flexType) {
         case 2:
-            flex = createBookingHistoryFlex(searchData.data, procedureData);
+            flex = createBookingHistoryFlex(searchData, procedureData);
             break;
         case 1:
-            flex = createBookingFlex_(searchData.data, procedureData);
+            flex = createBookingFlex_(searchData, procedureData);
             break;
         default:
             break;
@@ -153,11 +150,11 @@ const getLineNotifyProcedureData = async (supabase: any) => {
 
 
 //預約歷史紀錄 flex_message_type = 2
-const createBookingHistoryFlex = (rawBookings: any, procedureData?: any) => {
-    const bookings = rawBookings?.map((item: any) => item.line_get_booking_history) || [];
+const createBookingHistoryFlex = (searchData: any, procedureData?: any) => {
+    const bookings = procedureData || [];
 
     if (bookings.length === 0) {
-        const buttons = createButtons_(rawBookings.no_data_keys);
+        const buttons = createButtons_(searchData.no_data_keys);
         return {
             "type": "flex", "altText": "您目前沒有預約紀錄。",
             "contents": {
@@ -179,8 +176,8 @@ const createBookingHistoryFlex = (rawBookings: any, procedureData?: any) => {
         };
     }
 
-    const bubbles = procedureData.map((b: any) => {
-        const showTime = dayjs(b.booking_date).tz("Asia/Taipei").format("YYYY-MM-DD HH:mm");
+    const bubbles = bookings.map((b: any) => {
+        const showTime = formatDateTime(b.booking_date)
         const statusText = statusMap[String(b.status)] || { text: '', color: '' };
         return {
             "type": "bubble",
@@ -202,13 +199,13 @@ const createBookingHistoryFlex = (rawBookings: any, procedureData?: any) => {
 }
 
 
-//取得預約資料(可以取消資料) flex_message_type = 1
-function createBookingFlex_(rawBookings: any, no_data_keys: string[] = [], procedureData?: any) {
-    const bookings = rawBookings?.map((item: any) => item.line_get_booking_history) || [];
-    const cancellableBookings = bookings.filter((b: any) => String(b.status) === '1');
+//取得預約資料 flex_message_type = 1
+function createBookingFlex_(searchData: any, procedureData?: any) {
+    const bookings = procedureData || [];
+    // const cancellableBookings = bookings.filter((b: any) => String(b.status) === '1');
 
-    if (cancellableBookings.length === 0) {
-        const buttons = createButtons_(no_data_keys);
+    if (bookings.length === 0) {
+        const buttons = createButtons_(searchData.no_data_keys);
         return {
             "type": "flex", "altText": "您目前沒有可取消的預約。",
             "contents": {
@@ -227,9 +224,10 @@ function createBookingFlex_(rawBookings: any, no_data_keys: string[] = [], proce
         };
     }
     let bubbles = []
-    if (procedureData) {
-        bubbles = cancellableBookings.map((b: any) => {
-            const showTime = dayjs(b.booking_date).tz("Asia/Taipei").format("YYYY-MM-DD HH:mm");
+    if (bookings) {
+        bubbles = bookings.map((b: any) => {
+
+            const showTime = formatDateTime(b.booking_date)
             return {
                 "type": "bubble",
                 "header": {
@@ -240,7 +238,7 @@ function createBookingFlex_(rawBookings: any, no_data_keys: string[] = [], proce
                     "type": "box", "layout": "vertical", "spacing": "md",
                     "contents": [
                         { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "時間", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": showTime, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] },
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "服務", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": b.service_name || "未提供", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] }
+                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "服務", "color": "#aaaaaa", "size": "sm", "flex": 2 }, { "type": "text", "text": b.service_item || "未提供", "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] }
                     ]
                 },
                 "footer": {
@@ -260,7 +258,7 @@ function createBookingFlex_(rawBookings: any, no_data_keys: string[] = [], proce
 
 //還需要其他服務嗎
 function createQuickActionsFlex_(more_keys: string[] = []) {
-    const buttons = createButtons_(more_keys);
+    const buttons = createButtons_(more_keys, false);
     if (buttons.length === 0) return null;
 
     return {
@@ -287,20 +285,24 @@ function createQuickActionsFlex_(more_keys: string[] = []) {
 /**
  * 通用工具：將關鍵字列轉為 LINE 按鈕物件
  */
-function createButtons_(keys: string[]) {
+function createButtons_(keys: string[], isPrimary = true) {
     if (!keys || keys.length === 0) return [];
 
     // 將 key 陣列轉為按鈕物件
     return keys.map(key => {
         return {
             "type": "button",
-            "style": "link",
-            "height": "sm",
             "action": {
                 "type": "message",
                 "label": key,
                 "text": key
-            }
+            },
+            // --- 這裡開始根據 flag 切換 ---
+            "style": isPrimary ? "primary" : "link",
+            "color": isPrimary ? "#463ec9" : null,      // link 模式下通常不設背景色
+            "cornerRadius": isPrimary ? "md" : null,   // link 模式不支援圓角
+            "height": "sm",
+            "margin": "md"
         };
     });
 }

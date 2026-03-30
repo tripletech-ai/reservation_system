@@ -9,6 +9,7 @@ export const CONFIG_ENV = {
     },
     services: {
         lineNotifyEdge: process.env.NEXT_PUBLIC_EDGE_FUNCTION!,
+        lineNotifyEdgePush: process.env.NEXT_PUBLIC_EDGE_FUNCTION_PUSH!,
     },
     nodeEnv: process.env.NODE_ENV,
     liffId: process.env.NEXT_PUBLIC_LIFF_ID,
