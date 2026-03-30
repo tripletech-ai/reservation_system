@@ -12,12 +12,14 @@ import {
   getAllManagers,
   upsertManager,
 } from '@/app/actions/superManagers'
-import { getSuperSession } from '@/app/actions/superAuth'
+import { getSession } from '@/app/actions/superAuth'
 import { useSuperAdmin } from '../../SuperAdminContext'
 import { NotifyEntry, QItem } from '@/types'
 import { useAlert } from '@/components/ui/DialogProvider'
 import { supabaseAdmin } from '@/lib/supabase' // 引入供 Storage 使用
 import { hashPassword } from '@/lib/auth'
+import { ROUTES } from '@/constants/routes'
+import { MANAGER_LEVEL } from '@/constants/common'
 
 
 // ─── 多選下拉選單組件 ──────────────────────────────────────────
@@ -511,8 +513,8 @@ export default function ManagerEditPage() {
 
   useEffect(() => {
     async function init() {
-      const session = await getSuperSession()
-      if (!session) { router.push('/superAdmin/login'); return }
+      const session = await getSession(MANAGER_LEVEL.SUPER)
+      if (!session) { router.push(ROUTES.SUPER_ADMIN.LOGIN); return }
 
       if (isNew) {
         setManager({ name: '', account: '', password: '', logo_url: '/logo.png', website_name: '' })
@@ -522,7 +524,7 @@ export default function ManagerEditPage() {
 
       const all = await getAllManagers()
       const found = all.find((m: any) => m.uid === params.uid)
-      if (!found) { router.push('/superAdmin'); return }
+      if (!found) { router.push(ROUTES.SUPER_ADMIN.HOME); return }
 
       setManager(found)
       setLogoPreview(found.logo_url)
@@ -695,6 +697,13 @@ export default function ManagerEditPage() {
                     </div>
                   </label>
                 </div>
+                {logoPreview && (
+                  <div className="px-3 py-2 bg-black/20 border border-white/5 rounded-lg">
+                    <div className="text-[11px] font-mono text-emerald-400/80 break-all leading-relaxed bg-white/5 p-2 rounded">
+                      {logoPreview}
+                    </div>
+                  </div>
+                )}
               </div>
             </Field>
             <Field label="權限等級 (1:最高權限, 0:一般管理員)">

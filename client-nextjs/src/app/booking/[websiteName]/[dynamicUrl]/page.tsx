@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import BookingClient from './BookingClient'
 import LiffInitializer from '@/components/line/LiffInitializer'
 import { BookingClientProps } from '@/types';
+import { ROUTES } from '@/constants/routes';
 
 type Props = {
   params: Promise<{ websiteName: string; dynamicUrl: string }>;
@@ -22,20 +23,21 @@ export default async function BookingPage({ params, searchParams }: Props) {
   if (!data) {
     notFound()
   }
+
   // 如果提供了 line_uid 但找不到會員，跳轉到註冊頁面 (依據參考邏輯)
   if (line_uid && !data.is_member) {
     const query = new URLSearchParams({
       line_uid,
       manager_uid: data.event.manager_uid,
-      return_url: `/booking/${websiteName}/${dynamicUrl}${schedule_menu_uid ? `?schedule_menu_uid=${schedule_menu_uid}&line_uid=${line_uid}` : `?line_uid=${line_uid}`}`,
+      return_url: ROUTES.BOOKING(websiteName, dynamicUrl, schedule_menu_uid, line_uid),
       questionnaire: JSON.stringify(data.manager?.questionnaire)
     }).toString()
 
-    redirect(`/register?${query}`)
+    redirect(ROUTES.REGISTER(query))
   }
 
   const info: BookingClientProps = {
-    is_member: data.is_member,
+    is_member: true,
     manager: data.manager || null,
     event: data.event,
     schedule: data.schedule,

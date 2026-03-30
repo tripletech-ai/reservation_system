@@ -13,8 +13,10 @@ import {
   Menu,
   X
 } from 'lucide-react'
-import { logoutAction } from '@/app/actions/auth'
+
 import { ROUTES } from '@/constants/routes'
+import { logoutAction } from '@/app/actions/superAuth'
+import { MANAGER_LEVEL } from '@/constants/common'
 
 
 interface DashboardNavProps {
@@ -29,7 +31,7 @@ export default function DashboardNav({ session }: DashboardNavProps) {
   const pathname = usePathname()
 
   const toggleSidebar = () => setIsOpen(!isOpen)
-
+  const handleLogout = logoutAction.bind(null, MANAGER_LEVEL.ADMIN);
   return (
     <>
       {/* Mobile Top Header */}
@@ -95,8 +97,8 @@ export default function DashboardNav({ session }: DashboardNavProps) {
               <p className="text-ms text-slate-300 truncate">{session.account}</p>
             </div>
           </div>
-          <form action={logoutAction}>
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-xm font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+          <form action={handleLogout}>
+            <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
               <LogOut size={18} />
               <span>登出系統</span>
             </button>

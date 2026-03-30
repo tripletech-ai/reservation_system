@@ -64,7 +64,7 @@ export default function BookingList({
     router.push(`${pathname}?${params.toString()}`)
   }
 
-  const handleCancel = async (deleteType: number = 1) => {
+  const handleCancel = async (deleteType: number = 0) => {
     if (!selectedBooking) return
     const isConfirmed = await showConfirm({
       message: '確定要取消此預約嗎？',
@@ -76,7 +76,7 @@ export default function BookingList({
 
     setIsCancelling(true)
     // -- 0: 備份並刪除
-    const res = await cancelBooking(selectedBooking.uid, session, TIME_SLOT_INTERVAL, 0)
+    const res = await cancelBooking(selectedBooking.uid, session, TIME_SLOT_INTERVAL, deleteType)
     if (res.success) {
       setSelectedBooking(null)
       router.refresh()
@@ -331,7 +331,7 @@ export default function BookingList({
                 {selectedBooking.status !== BOOKING_STATUS.CANCELLED && (
                   <button
                     disabled={isCancelling || isSaving}
-                    onClick={() => handleCancel(1)}
+                    onClick={() => handleCancel()}
                     className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/30 transition-all text-slate-300 flex items-center justify-center gap-2"
                   >
                     {isCancelling ? <Loader2 className="animate-spin" size={18} /> : <Ban size={18} />}

@@ -8,10 +8,12 @@ import {
   Loader2, Globe, Settings
 } from 'lucide-react'
 import { getAllManagers, deleteManager } from '@/app/actions/superManagers'
-import { getSuperSession, superLogoutAction } from '@/app/actions/superAuth'
+import { getSession, logoutAction } from '@/app/actions/superAuth'
 import { useAlert } from '@/components/ui/DialogProvider'
 import { CONFIG_ENV } from '@/lib/env'
 import CopyButton from '@/components/ui/CopyButton'
+import { ROUTES } from '@/constants/routes'
+import { MANAGER_LEVEL } from '@/constants/common'
 
 
 
@@ -28,8 +30,8 @@ export default function SuperAdminPage() {
 
   useEffect(() => {
     async function checkSession() {
-      const session = await getSuperSession()
-      if (!session) { router.push('/superAdmin/login'); return }
+      const session = await getSession(MANAGER_LEVEL.SUPER)
+      if (!session) { router.push(ROUTES.SUPER_ADMIN.LOGIN); return }
       loadManagers()
     }
     checkSession()
@@ -82,7 +84,7 @@ export default function SuperAdminPage() {
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button
-            onClick={async () => { await superLogoutAction(); router.push('/superAdmin/login') }}
+            onClick={async () => { await logoutAction(MANAGER_LEVEL.SUPER); router.push(ROUTES.SUPER_ADMIN.LOGIN) }}
             className="flex-1 md:flex-none px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[14px] font-black uppercase tracking-widest hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/30 transition-all active:scale-95 text-slate-400 shadow-lg"
           >
             登出
@@ -130,9 +132,15 @@ export default function SuperAdminPage() {
                   className="group relative bg-white/[0.02] border border-white/10 rounded-3xl p-6 hover:bg-white/[0.04] hover:border-purple-500/30 transition-all duration-500 shadow-xl"
                 >
                   <div className="flex items-start justify-between">
-                    <div className="w-16 h-16 bg-gradient-to-br from-white/10 to-transparent border border-white/10 rounded-2xl overflow-hidden flex items-center justify-center p-3.5 shadow-inner group-hover:scale-105 transition-transform duration-500">
+                    <div className="w-16 h-16 bg-gradient-to-br from-white/10 to-transparent border border-white/10 rounded-2xl overflow-hidden flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-500">
                       {manager.logo_url ? (
-                        <img src={manager.logo_url} alt={manager.name} className="w-full h-full object-contain filter contrast-[1.1] transition-all duration-500" />
+                        <img
+                          src={manager.logo_url}
+                          alt={manager.name}
+                          // 1. 改為 object-cover 填滿
+                          // 2. 確保寬高都是 100% (w-full h-full)
+                          className="w-full h-full object-cover filter contrast-[1.1] transition-all duration-500"
+                        />
                       ) : (
                         <User size={32} className="text-slate-600" />
                       )}

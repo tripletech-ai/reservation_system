@@ -1,5 +1,6 @@
 'use client'
 
+import { ROUTES } from '@/constants/routes'
 import { motion } from 'framer-motion'
 import {
   Calendar,
@@ -75,12 +76,6 @@ export default function LandingPage() {
           <Link href="#features" className="hover:text-white transition-colors">功能特性</Link>
           <Link href="#how-it-works" className="hover:text-white transition-colors">運作流程</Link>
           <div className="w-px h-4 bg-white/10 mx-2" />
-          <Link
-            href="/login"
-            className="px-6 py-2.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-all font-black text-white"
-          >
-            店家管理
-          </Link>
         </div>
       </nav>
 
@@ -108,7 +103,7 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <Link
-                href="/login"
+                href={ROUTES.LOGIN}
                 className="group w-full sm:w-auto px-12 py-5 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-3xl font-black text-lg shadow-[0_20px_50px_-10px_rgba(147,51,234,0.5)] hover:shadow-[0_25px_60px_-10px_rgba(147,51,234,0.6)] hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-3"
               >
                 立即開始體驗 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -192,12 +187,6 @@ export default function LandingPage() {
             <h2 className="text-5xl md:text-7xl font-black mb-12 leading-[1.1] tracking-tight">
               把最好的體驗 <br />留給您的顧客。
             </h2>
-            <Link
-              href="/login"
-              className="group inline-flex items-center gap-6 px-16 py-7 bg-white text-black rounded-full font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_20px_80px_-15px_rgba(255,255,255,0.4)]"
-            >
-              立即註冊店家帳號 <ArrowRight size={28} className="group-hover:translate-x-2 transition-transform" />
-            </Link>
 
             <div className="mt-24 flex flex-wrap items-center justify-center gap-12 text-slate-600 font-bold uppercase tracking-[0.3em] text-[10px]">
               <div className="flex items-center gap-3"><Clock size={16} className="text-purple-600" /> 極速對接</div>

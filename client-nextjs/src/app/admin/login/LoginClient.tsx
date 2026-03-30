@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LogIn, User, Lock, ArrowRight, Loader } from 'lucide-react'
-import { loginAction } from '../actions/auth'
+
 import { useRouter } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
+import { loginAction } from '@/app/actions/superAuth'
+import { MANAGER_LEVEL } from '@/constants/common'
 
 export default function LoginClient() {
   const [loading, setLoading] = useState(false)
@@ -19,7 +21,7 @@ export default function LoginClient() {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
-    const result = await loginAction(formData)
+    const result = await loginAction(formData, MANAGER_LEVEL.ADMIN)
 
     setLoading(false)
     if (result.success) {

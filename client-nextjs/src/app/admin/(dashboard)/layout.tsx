@@ -1,14 +1,16 @@
-import { getAuthSession } from '@/services/auth'
+
 import { redirect } from 'next/navigation'
 import DashboardNav from './DashboardNav'
 import { ROUTES } from '@/constants/routes'
+import { MANAGER_LEVEL } from '@/constants/common'
+import { getSession } from '@/app/actions/superAuth'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getAuthSession()
+  const session = await getSession(MANAGER_LEVEL.ADMIN)
 
   if (!session) {
     redirect(ROUTES.LOGIN)
@@ -30,3 +32,5 @@ export default async function DashboardLayout({
     </div>
   )
 }
+
+

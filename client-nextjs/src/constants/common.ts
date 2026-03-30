@@ -16,3 +16,9 @@ export const BOOKING_STATUS = {
     BOOKING: 1,
     COMPLETED: 2,
 }
+
+
+export const MANAGER_LEVEL = {
+    SUPER: 1,
+    ADMIN: 0,
+}

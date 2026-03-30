@@ -1,9 +1,11 @@
-import { getAuthSession } from '@/services/auth'
+
 import { getScheduleMenus } from '@/services/data'
 import ScheduleList from './ScheduleList'
+import { getSession } from '@/app/actions/superAuth'
+import { MANAGER_LEVEL } from '@/constants/common'
 
 export default async function SchedulesPage() {
-  const session = await getAuthSession()
+  const session = await getSession(MANAGER_LEVEL.ADMIN)
   if (!session) return null
 
   const menus = await getScheduleMenus(session.uid)

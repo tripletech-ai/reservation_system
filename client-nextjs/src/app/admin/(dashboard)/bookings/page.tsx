@@ -1,15 +1,15 @@
-import { getAuthSession } from '@/services/auth'
 import { getBookings } from '@/services/data'
 import { Calendar, Clock, DollarSign, Filter } from 'lucide-react'
 import BookingList from './BookingList'
-import { BOOKING_STATUS } from '@/constants/common'
+import { BOOKING_STATUS, MANAGER_LEVEL } from '@/constants/common'
+import { getSession } from '@/app/actions/superAuth'
 
 export default async function BookingsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; page?: string; pageSize?: string }>
 }) {
-  const session = await getAuthSession()
+  const session = await getSession(MANAGER_LEVEL.ADMIN)
   if (!session) return null
 
   const params = await searchParams

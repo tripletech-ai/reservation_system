@@ -1,14 +1,16 @@
-import { getAuthSession } from '@/services/auth'
+
 import { getScheduleDetails } from '@/services/data'
 import ScheduleForm from './ScheduleForm'
 import { ScheduleData } from '@/types'
+import { getSession } from '@/app/actions/superAuth'
+import { MANAGER_LEVEL } from '@/constants/common'
 
 export default async function ScheduleEditPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
-  const session = await getAuthSession()
+  const session = await getSession(MANAGER_LEVEL.ADMIN)
   if (!session) return null
 
   const { id } = await params

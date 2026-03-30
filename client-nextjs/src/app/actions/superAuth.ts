@@ -1,10 +1,12 @@
 'use server'
 
+import { MANAGER_LEVEL } from '@/constants/common'
 import { comparePassword } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { Manager } from '@/types'
 import { cookies } from 'next/headers'
 
-export async function superLoginAction(formData: FormData) {
+export async function loginAction(formData: FormData, type: number) {
   const account = formData.get('account') as string
   const password = formData.get('password') as string
 
@@ -16,9 +18,10 @@ export async function superLoginAction(formData: FormData) {
     .from('manager')
     .select('*')
     .eq('account', account)
-    .eq('level', '1')
+    .gte('level', type)
     .single()
 
+  console.log("user", user)
   if (error || !user) {
     return { success: false, message: '管理員帳號錯誤' }
   }
@@ -29,28 +32,37 @@ export async function superLoginAction(formData: FormData) {
   }
   user.password = ''
   const cookieStore = await cookies()
-  cookieStore.set('super_session', JSON.stringify({ uid: user.uid, account: user.account }), {
+  cookieStore.set(cacheKey(type), JSON.stringify({ uid: user.uid, account: user.account, website_name: user.website_name, logo_url: user.logo_url, google_calendar_id: user.google_calendar_id }), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24, // 1 day
     path: '/'
   })
 
-  return { success: true }
+  return {
+    success: true,
+    message: '登入成功',
+    user: user as Manager
+  }
 }
 
-export async function superLogoutAction() {
+export async function logoutAction(type: number) {
   const cookieStore = await cookies()
-  cookieStore.delete('super_session')
+  cookieStore.delete(cacheKey(type))
 }
 
-export async function getSuperSession() {
+export async function getSession(type: number) {
   const cookieStore = await cookies()
-  const session = cookieStore.get('super_session')?.value
+  const session = cookieStore.get(cacheKey(type))?.value
   if (!session) return null
   try {
     return JSON.parse(session)
   } catch {
     return null
   }
+}
+
+
+const cacheKey = (type: number) => {
+  return type == MANAGER_LEVEL.SUPER ? 'super_session' : 'manager_session'
 }

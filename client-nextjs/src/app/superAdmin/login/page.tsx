@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Lock, User, Loader2, ArrowRight, Shield } from 'lucide-react'
-import { superLoginAction } from '@/app/actions/superAuth'
+import { loginAction } from '@/app/actions/superAuth'
+import { ROUTES } from '@/constants/routes'
+import { MANAGER_LEVEL } from '@/constants/common'
 
 export default function SuperAdminLoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -17,10 +19,10 @@ export default function SuperAdminLoginPage() {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
-    const res = await superLoginAction(formData)
+    const res = await loginAction(formData, MANAGER_LEVEL.SUPER)
 
     if (res.success) {
-      router.push('/superAdmin')
+      router.push(ROUTES.SUPER_ADMIN.HOME)
     } else {
       setError(res.message || '登入失敗')
       setLoading(false)

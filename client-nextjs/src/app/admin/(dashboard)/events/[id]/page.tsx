@@ -1,11 +1,13 @@
-import { getAuthSession } from '@/services/auth'
+
 import { getEventDetails, getScheduleMenus } from '@/services/data'
 import { redirect, notFound } from 'next/navigation'
 import EventEditForm from './EventEditForm'
+import { getSession } from '@/app/actions/superAuth'
+import { MANAGER_LEVEL } from '@/constants/common'
 
 
 export default async function EventEditPage({ params }: { params: { id: string } }) {
-  const session = await getAuthSession()
+  const session = await getSession(MANAGER_LEVEL.ADMIN)
   if (!session) return null
 
   const { id } = await params

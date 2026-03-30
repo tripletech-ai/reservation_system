@@ -355,10 +355,16 @@ export default function BookingClient(props: BookingClientProps) {
 
       <div className="max-w-[1000px] mx-auto px-4 py-8 relative z-10">
         {/* Header */}
-        <header className="sticky top-4 z-50 bg-white/80 backdrop-blur-2xl border border-slate-200/50 rounded-2xl p-3 mb-8 flex items-center justify-between shadow-sm">
+        <header className="sticky top-4 z-50 bg-white/80 backdrop-blur-2xl border border-slate-200/50 rounded-2xl mb-8 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-xl flex items-center justify-center text-white overflow-hidden">
-              {manager?.logo_url ? <img src={`/logo/${manager?.logo_url}`} className="w-full h-full object-cover" alt="Logo" /> : <span className="font-bold">{event.title[0]}</span>}
+            <div className="w-16 h-16 bg-white/5 rounded-xl border border-white/10 overflow-hidden shrink-0">
+              {manager?.logo_url && (
+                <img
+                  src={manager?.logo_url}
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
             <h1 className="font-extrabold text-xm text-slate-800 line-clamp-1">{event.title}</h1>
           </div>
@@ -587,6 +593,22 @@ export default function BookingClient(props: BookingClientProps) {
                 <div className="bg-slate-50 p-6 rounded-3xl text-left space-y-4 mb-10 border border-slate-100">
                   <p className="text-[14px] font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">預約明細</p>
                   <div className="space-y-3">
+                    <div className="flex justify-between items-center text-xm">
+                      <span className="text-slate-900 font-bold">姓名</span>
+                      <span className="text-slate-800 font-black">{formData.name}</span>
+                    </div>
+                    {formData.phone && (
+                      <div className="flex justify-between items-center text-xm">
+                        <span className="text-slate-900 font-bold">電話</span>
+                        <span className="text-slate-800 font-black">{formData.phone}</span>
+                      </div>
+                    )}
+                    {formData.email && (
+                      <div className="flex justify-between items-center text-xm">
+                        <span className="text-slate-900 font-bold">信箱</span>
+                        <span className="text-slate-800 font-black">{formData.email}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center text-xm">
                       <span className="text-slate-900 font-bold">服務項目</span>
                       <span className="text-slate-800 font-black">{formData.selectedService?.title}</span>

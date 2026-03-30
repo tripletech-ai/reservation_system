@@ -1,11 +1,17 @@
-import { getAuthSession } from '@/services/auth'
+
 import { getEvents, getScheduleMenus } from '@/services/data'
 import { redirect } from 'next/navigation'
 import EventList from './EventList'
+import { MANAGER_LEVEL } from '@/constants/common'
+import { getSession } from '@/app/actions/superAuth'
+import { ROUTES } from '@/constants/routes'
 
 export default async function EventsPage() {
-  const session = await getAuthSession()
-  if (!session) redirect('/login')
+  const session = await getSession(MANAGER_LEVEL.ADMIN)
+  if (!session) redirect(ROUTES.LOGIN)
+
+
+  console.log("sss", session)
 
   const [events, menus] = await Promise.all([
     getEvents(session.uid),

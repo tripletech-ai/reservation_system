@@ -194,7 +194,7 @@ export async function getBookingInfo(
 
     const { data, error } = await supabaseAdmin.rpc('check_member_and_get_event_schedule_info', {
       p_line_uid: lineUid || null,
-      p_booking_dynamic_url: dynamicUrl,
+      p_booking_dynamic_url: decodeddynamicUrl,
       p_website_name: decodedWebsiteName,
       p_schedule_menu_uid: scheduleMenuUid || null
     });

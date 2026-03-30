@@ -1,13 +1,15 @@
-import { getAuthSession } from '@/services/auth'
+
 import { getMembers } from '@/services/data'
 import MemberList from './MemberList'
+import { MANAGER_LEVEL } from '@/constants/common';
+import { getSession } from '@/app/actions/superAuth';
 
 export default async function MembersPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; page?: string; pageSize?: string }>
 }) {
-  const session = await getAuthSession()
+  const session = await getSession(MANAGER_LEVEL.ADMIN)
   if (!session) return null
 
   const params = await searchParams

@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { revalidatePath, unstable_cache } from 'next/cache'
 import { nanoid } from 'nanoid'
 import { CACHE_TIME } from '@/constants/common'
+import { ROUTES } from '@/constants/routes'
 
 export async function getAllManagers() {
   const { data, error } = await supabaseAdmin
@@ -37,7 +38,9 @@ export async function upsertManager(payload: any) {
 
     if (error) throw error
 
-    revalidatePath('/superAdmin')
+    revalidatePath(ROUTES.SUPER_ADMIN.HOME)
+
+
     return { success: true }
   } catch (err: any) {
     console.error('upsertManager error:', err)
