@@ -12,6 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const runtime = "edge";
+
 export const metadata: Metadata = {
   title: "Triple",
   description: "Triple",
