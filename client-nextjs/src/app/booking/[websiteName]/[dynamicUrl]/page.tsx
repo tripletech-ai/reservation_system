@@ -18,11 +18,13 @@ export default async function BookingPage({ params, searchParams }: Props) {
   if (!line_uid) {
     return <LiffInitializer />
   }
+  console.log("line_uid", line_uid)
 
   const data = await getBookingInfo(websiteName, dynamicUrl, schedule_menu_uid, line_uid)
   if (!data) {
     notFound()
   }
+  console.log("data", data)
 
   // 如果提供了 line_uid 但找不到會員，跳轉到註冊頁面 (依據參考邏輯)
   if (line_uid && !data.is_member) {
