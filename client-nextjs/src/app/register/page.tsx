@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   User,
@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { registerMember } from '@/app/actions/members'
 import { useAlert } from '@/components/ui/DialogProvider'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { showAlert } = useAlert()
@@ -287,5 +287,18 @@ export default function RegisterPage() {
         </footer>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin text-purple-500 w-12 h-12 mb-4" />
+        <p className="text-white font-bold animate-pulse">載入中...</p>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   )
 }
