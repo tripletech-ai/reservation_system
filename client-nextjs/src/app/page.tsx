@@ -18,6 +18,13 @@ import Link from 'next/link'
  * Triple Reservation System - 官方首頁設計
  */
 export default function LandingPage() {
+
+  const line_back_url = localStorage.getItem('line_back_url')
+  if (line_back_url) {
+    window.location.replace(line_back_url)
+    localStorage.removeItem('line_back_url')
+  }
+
   const features = [
     {
       Icon: Calendar,
