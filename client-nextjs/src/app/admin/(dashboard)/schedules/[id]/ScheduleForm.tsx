@@ -216,7 +216,7 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
 
     const start = formData.get('startTime') as string
     const end = formData.get('endTime') as string
-    console.log(overrideDate, start, end)
+
     const startTime = TimeUtils.toUTC(`${overrideDate} ${start || '00:00'}`)
     const endTime = TimeUtils.toUTC(`${overrideDate} ${end || '23:59'}`)
 

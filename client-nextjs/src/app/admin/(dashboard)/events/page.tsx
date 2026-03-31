@@ -11,7 +11,7 @@ export default async function EventsPage() {
   if (!session) redirect(ROUTES.LOGIN)
 
 
-  console.log("sss", session)
+
 
   const [events, menus] = await Promise.all([
     getEvents(session.uid),

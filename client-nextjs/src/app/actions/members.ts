@@ -23,7 +23,7 @@ export async function registerMember(payload: {
       create_at: now,
       update_at: now
     }
-    console.log(data)
+
 
     const { data: result } = await supabaseAdmin
       .from('member').select('*')

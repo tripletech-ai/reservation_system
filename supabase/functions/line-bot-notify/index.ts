@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     const { name, phone, email, service_item, booking_start_time, booking_end_time, line_uid, manager_uid, action } = payload
 
 
-    console.log("payload", payload)
+
 
     let responseText = "";
     const managerData = await getManagerData(manager_uid);
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       searchData: searchData
     }
 
-    console.log("replyData:", replyData);
+
 
     // 3. 發送回覆給 Line
     await LineService.push(supabase, replyData);

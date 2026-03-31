@@ -216,7 +216,7 @@ export default function BookingClient(props: BookingClientProps) {
           return { start: s, end: e, cap: t.max_capacity, last: last };
         });
     }
-    console.log("activeRules", activeRules)
+
     if (activeRules.length === 0) return [];
 
     // 2. 切分時段 (Slot Splitting)
@@ -291,7 +291,7 @@ export default function BookingClient(props: BookingClientProps) {
 
     // 存入 Map 以供後續快速讀取
     bookingCacheSlotMap.set(dateStr, validSlots);
-    console.log("validSlots", validSlots)
+
     return validSlots;
   };
 
@@ -316,7 +316,7 @@ export default function BookingClient(props: BookingClientProps) {
       service_computed_duration: duration,
       line_uid: formData.line_uid || '',
     }
-    console.log("payload", payload)
+
 
     setSlotTime(`${startTimePart}-${endTimePart} (${duration}分鐘)`)
 

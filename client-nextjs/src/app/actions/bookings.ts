@@ -52,7 +52,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
           line_uid: payload.line_uid || result.line_uid
         }
       })
-      console.log("google_calendar_event_id", google_calendar_event_id)
+
       await supabaseAdmin.from('booking').update({
         google_calendar_event_id: google_calendar_event_id
       }).eq('uid', result.booking_uid)
@@ -99,11 +99,9 @@ export async function cancelBooking(bookingUid: string, session: Manager, timeSl
       return { success: false, message: result.error || error }
     }
 
-    console.log("result", result)
-    console.log("googleCalendarId", session)
     if (result.data?.google_calendar_event_id) {
 
-      console.log("eventId", result.data.google_calendar_event_id)
+
       await GoogleCalendarService.sync({
         action: 'DELETE',
         googleCalendarId: session.google_calendar_id,

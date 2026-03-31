@@ -74,7 +74,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
       options: JSON.stringify(options),
       schedule_menu_uid: JSON.stringify(selectedMenus)
     }
-    console.log(payload)
+
     const res = await saveEvent(payload)
     if (res.success) {
       router.push(ROUTES.ADMIN.EVENTS)

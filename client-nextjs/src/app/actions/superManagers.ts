@@ -73,7 +73,7 @@ export const getNotifyProcedures = unstable_cache(
       console.error('getNotifyProcedures error:', error)
       return []
     }
-    console.log("getNotifyProcedures", data)
+
     return data
   },
   ['line_notify_procedure'],

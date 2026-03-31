@@ -31,10 +31,10 @@ export const initLiff = async (liffId: string) => {
         pictureUrl: 'https://placehold.co/200',
         statusMessage: 'LIFF Mock Mode',
       });
-      console.log("LIFF Mock initialized");
+
     } else {
       await liff.init({ liffId });
-      console.log("LIFF initialized");
+
     }
 
     if (!liff.isLoggedIn()) {

@@ -112,7 +112,7 @@ function LineNotifyBuilder({
   const update = (i: number, nextEntry: Partial<NotifyEntry>) => {
     const next = [...value]
     next[i] = { ...next[i], ...nextEntry }
-    console.log("next", next)
+
     onChange(next)
   }
 
@@ -542,7 +542,7 @@ export default function ManagerEditPage() {
         const q = typeof raw === 'string' ? JSON.parse(raw || '[]') : (Array.isArray(raw) ? raw : [])
         setQuestionnaire(Array.isArray(q) ? q : [])
       } catch { setQuestionnaire([]) }
-      console.log(found.line_notify_content)
+
       setNotifyEntries(jsonToEntries(found.line_notify_content))
       setLoading(false)
     }

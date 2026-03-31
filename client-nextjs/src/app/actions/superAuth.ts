@@ -21,7 +21,7 @@ export async function loginAction(formData: FormData, type: number) {
     .gte('level', type)
     .single()
 
-  console.log("user", user)
+
   if (error || !user) {
     return { success: false, message: '管理員帳號錯誤' }
   }

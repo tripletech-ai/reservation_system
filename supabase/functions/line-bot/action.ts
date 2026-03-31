@@ -1,8 +1,7 @@
 
 
 export const executeProcedure = async (searchData: any, supabase: any, payload: any = {}) => {
-    console.log("searchData", searchData)
-    console.log("payload", payload)
+
     const { lineId } = payload;
     switch (searchData.procedure_name) {
         // case "line_get_booking_history":
@@ -22,8 +21,7 @@ const callProcedure = async (procedureName: string, supabase: any, lineId: strin
         luid: lineId
     });
 
-    console.log("callProcedure: ", data)
-    console.log("callProcedure: ", error)
+
     if (error) {
         return "";
     }
