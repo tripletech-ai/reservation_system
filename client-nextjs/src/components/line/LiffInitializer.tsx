@@ -16,15 +16,18 @@ export default function LiffInitializer() {
       console.error("尚未設定 NEXT_PUBLIC_LIFF_ID 環境變數");
       return;
     }
-
+    console.log("liffId", liffId)
     initLiff(liffId).then(async () => {
       try {
         const profile = await getLiffProfile()
+        console.log("profile", profile)
         if (profile) {
           // 將取得的 UID 加入 URL 參數並重新載入頁面 (讓 Server Component 可以讀到)
           const url = new URL(window.location.href)
           url.searchParams.set('line_uid', profile.userId)
           window.location.replace(url.toString())
+          console.log("url", url.toString())
+          console.log("profile.userId", profile.userId)
         }
       } catch (err) {
         console.error("取得 LINE Profile 失敗:", err)
