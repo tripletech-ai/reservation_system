@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+
 import {
   UserPlus, Search, Edit3, Trash2, Shield, User,
   Loader2, Globe, Settings
 } from 'lucide-react'
 import { getAllManagers, deleteManager } from '@/app/actions/superManagers'
-import { getSession, logoutAction } from '@/app/actions/superAuth'
+import { logoutAction } from '@/app/actions/superAuth'
 import { useAlert } from '@/components/ui/DialogProvider'
 import { CONFIG_ENV } from '@/lib/env'
 import CopyButton from '@/components/ui/CopyButton'
@@ -120,81 +120,76 @@ export default function SuperAdminPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-            <AnimatePresence>
-              {filteredManagers.map((manager, idx) => (
-                <motion.div
-                  key={manager.uid}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  className="group relative bg-white/[0.02] border border-white/10 rounded-3xl p-6 hover:bg-white/[0.04] hover:border-purple-500/30 transition-all duration-500 shadow-xl"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="w-16 h-16 bg-gradient-to-br from-white/10 to-transparent border border-white/10 rounded-2xl overflow-hidden flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-500">
-                      {manager.logo_url ? (
-                        <img
-                          src={manager.logo_url}
-                          alt={manager.name}
-                          // 1. 改為 object-cover 填滿
-                          // 2. 確保寬高都是 100% (w-full h-full)
-                          className="w-full h-full object-cover filter contrast-[1.1] transition-all duration-500"
-                        />
-                      ) : (
-                        <User size={32} className="text-slate-600" />
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => router.push(`/superAdmin/${manager.uid}/edit`)} className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600/40 hover:text-white hover:border-purple-500 transition-all text-slate-400 active:scale-90">
-                        <Edit3 size={18} />
+
+            {filteredManagers.map((manager, idx) => (
+              <div
+                key={manager.uid}
+                className="group relative bg-white/[0.02] border border-white/10 rounded-3xl p-6 hover:bg-white/[0.04] hover:border-purple-500/30 transition-all duration-500 shadow-xl"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="w-16 h-16 bg-gradient-to-br from-white/10 to-transparent border border-white/10 rounded-2xl overflow-hidden flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-500">
+                    {manager.logo_url ? (
+                      <img
+                        src={manager.logo_url}
+                        alt={manager.name}
+                        // 1. 改為 object-cover 填滿
+                        // 2. 確保寬高都是 100% (w-full h-full)
+                        className="w-full h-full object-cover filter contrast-[1.1] transition-all duration-500"
+                      />
+                    ) : (
+                      <User size={32} className="text-slate-600" />
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => router.push(`/superAdmin/${manager.uid}/edit`)} className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600/40 hover:text-white hover:border-purple-500 transition-all text-slate-400 active:scale-90">
+                      <Edit3 size={18} />
+                    </button>
+                    {manager.level == 0 && (
+                      <button onClick={() => handleDelete(manager.uid)} className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-rose-600/40 hover:text-white hover:border-rose-500 transition-all text-slate-400 active:scale-90">
+                        <Trash2 size={18} />
                       </button>
-                      {manager.level == 0 && (
-                        <button onClick={() => handleDelete(manager.uid)} className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-rose-600/40 hover:text-white hover:border-rose-500 transition-all text-slate-400 active:scale-90">
-                          <Trash2 size={18} />
-                        </button>
-                      )}
+                    )}
+                  </div>
+                </div>
+                <div className="mt-8 space-y-6 relative z-10">
+                  <div>
+                    <h2 className="text-2xl font-black text-white italic tracking-tighter leading-none mb-1 uppercase bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent group-hover:to-white transition-all">{manager.name}</h2>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-glow shadow-purple-500/50" />
+                      <p className="text-slate-300 font-black text-[13px] uppercase tracking-[0.25em]">@{manager.account}</p>
+                    </div>
+                    <div className="flex items-center mt-2">
+                      <CopyButton text={`${shareLink}?uid=${manager.uid}`} />
                     </div>
                   </div>
-                  <div className="mt-8 space-y-6 relative z-10">
-                    <div>
-                      <h2 className="text-2xl font-black text-white italic tracking-tighter leading-none mb-1 uppercase bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent group-hover:to-white transition-all">{manager.name}</h2>
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-glow shadow-purple-500/50" />
-                        <p className="text-slate-300 font-black text-[13px] uppercase tracking-[0.25em]">@{manager.account}</p>
-                      </div>
-                      <div className="flex items-center mt-2">
-                        <CopyButton text={`${shareLink}?uid=${manager.uid}`} />
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4 py-4 px-5 bg-white/[0.05] border border-white/5 rounded-2xl transition-all group-hover:bg-white/[0.08] shadow-inner">
+                      <Globe size={18} className="text-cyan-400 shrink-0" />
+                      <div className="flex-1 overflow-hidden">
+                        <p className="text-[14px] text-slate-300 font-black uppercase tracking-widest mb-0.5 opacity-60">網站名稱</p>
+                        <p className="text-xm font-black text-slate-200 truncate font-mono italic">{manager.website_name}</p>
                       </div>
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-4 py-4 px-5 bg-white/[0.05] border border-white/5 rounded-2xl transition-all group-hover:bg-white/[0.08] shadow-inner">
-                        <Globe size={18} className="text-cyan-400 shrink-0" />
-                        <div className="flex-1 overflow-hidden">
-                          <p className="text-[14px] text-slate-300 font-black uppercase tracking-widest mb-0.5 opacity-60">網站名稱</p>
-                          <p className="text-xm font-black text-slate-200 truncate font-mono italic">{manager.website_name}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 py-4 px-5 bg-white/[0.05] border border-white/5 rounded-2xl transition-all group-hover:bg-white/[0.08] shadow-inner">
-                        <Settings size={18} className="text-purple-400 shrink-0" />
-                        <div>
-                          <p className="text-[14px] text-slate-300 font-black uppercase tracking-widest mb-0.5 opacity-60">問卷題目</p>
-                          <p className="text-xm font-black text-slate-200 italic">
-                            {(() => {
-                              try {
-                                const raw = manager.questionnaire
-                                const q = typeof raw === 'string' ? JSON.parse(raw || '[]') : (Array.isArray(raw) ? raw : [])
-                                return q.length
-                              } catch { return 0 }
-                            })()} <span className="text-[14px] text-slate-300 not-italic ml-1 opacity-50 uppercase tracking-tighter">題</span>
-                          </p>
-                        </div>
+                    <div className="flex items-center gap-4 py-4 px-5 bg-white/[0.05] border border-white/5 rounded-2xl transition-all group-hover:bg-white/[0.08] shadow-inner">
+                      <Settings size={18} className="text-purple-400 shrink-0" />
+                      <div>
+                        <p className="text-[14px] text-slate-300 font-black uppercase tracking-widest mb-0.5 opacity-60">問卷題目</p>
+                        <p className="text-xm font-black text-slate-200 italic">
+                          {(() => {
+                            try {
+                              const raw = manager.questionnaire
+                              const q = typeof raw === 'string' ? JSON.parse(raw || '[]') : (Array.isArray(raw) ? raw : [])
+                              return q.length
+                            } catch { return 0 }
+                          })()} <span className="text-[14px] text-slate-300 not-italic ml-1 opacity-50 uppercase tracking-tighter">題</span>
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-purple-600/0 via-purple-600/50 to-cyan-600/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-purple-600/0 via-purple-600/50 to-cyan-600/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            ))}
           </div>
         )}
       </main>

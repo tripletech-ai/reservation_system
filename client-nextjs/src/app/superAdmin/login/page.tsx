@@ -1,8 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Lock, User, Loader2, ArrowRight, Shield } from 'lucide-react'
 import { loginAction } from '@/app/actions/superAuth'
 import { ROUTES } from '@/constants/routes'
 import { MANAGER_LEVEL } from '@/constants/common'
@@ -37,21 +35,11 @@ export default function SuperAdminLoginPage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] bg-white/[0.02] rounded-full blur-[150px] pointer-events-none" />
 
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full max-w-[460px] relative z-10"
-      >
+      <div className="w-full max-w-[460px] relative z-10 opacity-0 animate-[fadeUp_0.8s_ease-out_forwards]">
         <div className="text-center mb-12">
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-[2rem] shadow-2xl shadow-purple-500/30 mb-8"
-          >
-            <Shield className="text-white w-10 h-10" />
-          </motion.div>
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-[2rem] shadow-2xl shadow-purple-500/30 mb-8 transition-transform duration-500 hover:scale-110">
+            <svg viewBox="0 0 24 24" width="40" height="40" stroke="white" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </div>
           <h1 className="text-4xl font-black text-white tracking-tighter mb-4 italic uppercase">
             Triple SuperAdmin
           </h1>
@@ -66,7 +54,7 @@ export default function SuperAdminLoginPage() {
               <label className="text-[14px] font-black text-slate-300 uppercase tracking-[0.3em] ml-1">帳號</label>
               <div className="relative group">
                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-purple-400 transition-colors">
-                  <User size={18} />
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 </div>
                 <input
                   name="account"
@@ -82,7 +70,7 @@ export default function SuperAdminLoginPage() {
               <label className="text-[14px] font-black text-slate-300 uppercase tracking-[0.3em] ml-1">密碼</label>
               <div className="relative group">
                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-cyan-400 transition-colors">
-                  <Lock size={18} />
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 </div>
                 <input
                   name="password"
@@ -95,24 +83,20 @@ export default function SuperAdminLoginPage() {
             </div>
 
             {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl"
-              >
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl animate-[shake_0.5s_ease-in-out]">
                 <p className="text-rose-400 text-ms font-bold text-center italic">{error}</p>
-              </motion.div>
+              </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-br from-purple-600 to-cyan-600 py-4 rounded-2xl text-white font-black text-[13px] uppercase tracking-widest shadow-xl shadow-purple-500/20 hover:scale-[1.02] active:scale-x-[0.98] transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-3"
+              className="w-full bg-gradient-to-br from-purple-600 to-cyan-600 py-4 rounded-2xl text-white font-black text-[13px] uppercase tracking-widest shadow-xl shadow-purple-500/20 hover:scale-[1.02] active:scale-x-[0.98] transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-3 cursor-pointer"
             >
               {loading ? (
-                <Loader2 className="animate-spin" size={18} />
+                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
               ) : (
-                <>確認登入 <ArrowRight size={18} /></>
+                <>確認登入 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></>
               )}
             </button>
           </form>
@@ -121,7 +105,19 @@ export default function SuperAdminLoginPage() {
         <p className="text-center mt-12 text-[14px] text-slate-600 font-bold tracking-[0.2em] uppercase">
           v1.0.0 © Power By Antigravity-Engine
         </p>
-      </motion.div>
+
+        <style jsx global>{`
+          @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+          }
+        `}</style>
+      </div>
     </div>
   )
 }

@@ -1,9 +1,5 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Phone, Mail, ExternalLink, X, ChevronLeft, ChevronRight, User, Calendar, Clock, Tag, DollarSign, Ban, CheckCircle2, Loader2 } from 'lucide-react'
 import type { Booking, BookingListProps } from '@/types'
 import { useAlert } from '@/components/ui/DialogProvider'
 import { cancelBooking, updateBookingDepositStatus } from '@/app/actions/bookings'
@@ -103,16 +99,18 @@ export default function BookingList({
     <div className="space-y-6">
       <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-xl">
         <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </div>
           <input
             type="text"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="搜尋預約人、手機或服務名稱..."
-            className="w-full pl-12 pr-4 py-3 bg-white/10 rounded-xl border border-white/10 outline-none focus:border-purple-500/50 transition-all text-white placeholder-slate-400"
+            className="w-full pl-12 pr-4 py-3 bg-white/10 rounded-xl border border-white/10 outline-none focus:border-purple-500/50 transition-all text-white placeholder-slate-400 font-bold"
           />
         </div>
-        <button type="submit" className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-white">
+        <button type="submit" className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-white cursor-pointer">
           搜尋
         </button>
       </form>
@@ -138,11 +136,11 @@ export default function BookingList({
                 >
                   <td className="px-6 py-5 space-y-1.5 whitespace-nowrap">
                     <div className="flex items-center gap-2 text-xm text-white font-bold">
-                      <Calendar size={14} className="text-cyan-400 shrink-0" />
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400 shrink-0"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                       <span>{TimeUtils.getDatePart(booking.booking_start_time)}</span>
                     </div>
                     <div className="flex items-center gap-2 text-[12px] text-slate-300 font-mono font-bold tracking-tight">
-                      <Clock size={14} className="text-cyan-400 shrink-0" />
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400 shrink-0"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                       <span>{TimeUtils.getTimePart(booking.booking_start_time)}</span>
                       <span className="opacity-40">—</span>
                       <span>{TimeUtils.getTimePart(booking.booking_end_time)}</span>
@@ -154,7 +152,7 @@ export default function BookingList({
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-2">
-                      <Tag size={14} className="text-purple-400 shrink-0" />
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400 shrink-0"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg>
                       <span className="text-slate-100 font-bold text-xm whitespace-nowrap">{booking.service_item}</span>
                     </div>
                   </td>
@@ -174,8 +172,8 @@ export default function BookingList({
                     </div>
                   </td>
                   <td className="px-6 py-5 text-right">
-                    <button className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all inline-flex items-center">
-                      <ExternalLink size={18} />
+                    <button className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all inline-flex items-center cursor-pointer">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     </button>
                   </td>
                 </tr>
@@ -214,9 +212,9 @@ export default function BookingList({
             <button
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
-              className="p-2 bg-white/5 border border-white/10 rounded-xl disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10 hover:border-white/20 transition-all text-white"
+              className="p-2 bg-white/5 border border-white/10 rounded-xl disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10 hover:border-white/20 transition-all text-white cursor-pointer"
             >
-              <ChevronLeft size={20} />
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             <div className="flex items-center gap-1 overflow-x-auto max-w-[200px] sm:max-w-none no-scrollbar">
               {totalPages > 0 ? [...Array(totalPages)].map((_, i) => (
@@ -226,7 +224,7 @@ export default function BookingList({
                   className={`min-w-[40px] h-10 rounded-xl text-xm font-bold transition-all ${currentPage === i + 1
                     ? 'bg-gradient-to-br from-purple-600 to-cyan-600 text-white shadow-lg shadow-purple-500/30'
                     : 'hover:bg-white/10 text-slate-400 hover:text-white border border-transparent hover:border-white/10'
-                    }`}
+                    } cursor-pointer`}
                 >
                   {i + 1}
                 </button>
@@ -239,117 +237,117 @@ export default function BookingList({
             <button
               disabled={currentPage === totalPages || totalPages === 0}
               onClick={() => handlePageChange(currentPage + 1)}
-              className="p-2 bg-white/5 border border-white/10 rounded-xl disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10 hover:border-white/20 transition-all text-white"
+              className="p-2 bg-white/5 border border-white/10 rounded-xl disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10 hover:border-white/20 transition-all text-white cursor-pointer"
             >
-              <ChevronRight size={20} />
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
         </div>
       </div>
 
-      <AnimatePresence>
-        {selectedBooking && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedBooking(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 max-h-[90vh] flex flex-col"
-            >
-              <div className="p-6 md:p-8 flex items-center justify-between border-b border-white/5 bg-white/5">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center border border-white/10">
-                    <Calendar className="w-7 h-7 text-purple-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-white leading-tight">預約詳細資訊</h2>
-                    <p className="text-slate-300 font-mono text-ms mt-1">{selectedBooking.uid}</p>
+
+      {selectedBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            onClick={() => setSelectedBooking(null)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <div
+            className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 max-h-[90vh] flex flex-col"
+          >
+            <div className="p-6 md:p-8 flex items-center justify-between border-b border-white/5 bg-white/5">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center border border-white/10">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white leading-tight">預約詳細資訊</h2>
+                  <p className="text-slate-300 font-mono text-ms mt-1">{selectedBooking.uid}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedBooking(null)} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-slate-400 hover:text-white cursor-pointer">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div className="p-6 md:p-8 overflow-y-auto flex-1 space-y-6 no-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <InfoItem icon={<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>} label="預約人" value={selectedBooking.name} />
+                <InfoItem icon={<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>} label="手機電話" value={selectedBooking.phone} />
+                <div className="col-span-1 sm:col-span-2">
+                  <InfoItem icon={<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg>} label="服務項目" value={selectedBooking.service_item} />
+                </div>
+                <InfoItem icon={<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>} label="開始時間" value={TimeUtils.getDateTime(selectedBooking.booking_start_time)} />
+                <div className="space-y-2">
+                  <p className="text-[14px] text-slate-400 uppercase font-black tracking-widest flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> 訂金支付狀態
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setTempDepositStatus(!tempDepositStatus)}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-200 outline-none flex items-center cursor-pointer ${tempDepositStatus ? 'bg-emerald-600 shadow-inner' : 'bg-slate-700 shadow-inner'}`}
+                    >
+                      <div
+                        className={`w-4 h-4 bg-white rounded-full shadow-lg transition-transform duration-200 transform ${tempDepositStatus ? 'translate-x-[26px]' : 'translate-x-[4px]'}`}
+                      />
+                    </button>
+                    <span className={`text-xm font-bold ${tempDepositStatus ? 'text-emerald-400' : 'text-slate-300'}`}>
+                      {tempDepositStatus ? '已付訂金' : '待支付'}
+                    </span>
                   </div>
                 </div>
-                <button onClick={() => setSelectedBooking(null)} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-slate-400 hover:text-white">
-                  <X size={24} />
-                </button>
               </div>
 
-              <div className="p-6 md:p-8 overflow-y-auto flex-1 space-y-6 no-scrollbar">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <InfoItem icon={<User className="text-cyan-400" size={16} />} label="預約人" value={selectedBooking.name} />
-                  <InfoItem icon={<Phone className="text-purple-400" size={16} />} label="手機電話" value={selectedBooking.phone} />
-                  <div className="col-span-1 sm:col-span-2">
-                    <InfoItem icon={<Tag className="text-emerald-400" size={16} />} label="服務項目" value={selectedBooking.service_item} />
-                  </div>
-                  <InfoItem icon={<Clock className="text-yellow-400" size={16} />} label="開始時間" value={TimeUtils.getDateTime(selectedBooking.booking_start_time)} />
-                  <div className="space-y-2">
-                    <p className="text-[14px] text-slate-400 uppercase font-black tracking-widest flex items-center gap-2">
-                      <DollarSign size={14} className="text-emerald-400" /> 訂金支付狀態
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setTempDepositStatus(!tempDepositStatus)}
-                        className={`relative w-12 h-6 rounded-full transition-all duration-200 outline-none flex items-center ${tempDepositStatus ? 'bg-emerald-600 shadow-inner' : 'bg-slate-700 shadow-inner'}`}
-                      >
-                        <motion.div
-                          animate={{ x: tempDepositStatus ? 26 : 4 }}
-                          className="w-4 h-4 bg-white rounded-full shadow-lg"
-                        />
-                      </button>
-                      <span className={`text-xm font-bold ${tempDepositStatus ? 'text-emerald-400' : 'text-slate-300'}`}>
-                        {tempDepositStatus ? '已付訂金' : '待支付'}
-                      </span>
-                    </div>
+              {selectedBooking.notes && (
+                <div className="space-y-2 pt-2">
+                  <p className="text-[14px] text-slate-400 uppercase font-black tracking-widest">備註事項</p>
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-3xl text-slate-200 text-xm leading-relaxed whitespace-pre-wrap font-bold">
+                    {selectedBooking.notes}
                   </div>
                 </div>
+              )}
+            </div>
 
-                {selectedBooking.notes && (
-                  <div className="space-y-2 pt-2">
-                    <p className="text-[14px] text-slate-400 uppercase font-black tracking-widest">備註事項</p>
-                    <div className="p-4 bg-white/5 border border-white/10 rounded-3xl text-slate-200 text-xm leading-relaxed whitespace-pre-wrap">
-                      {selectedBooking.notes}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-8 pt-0 flex gap-3">
-                {tempDepositStatus !== selectedBooking.is_deposit_received && (
-                  <button
-                    disabled={isSaving}
-                    onClick={handleUpdateStatus}
-                    className="flex-[1.5] py-4 bg-emerald-600 rounded-2xl font-bold text-white hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
-                  >
-                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-                    儲存訂金狀態
-                  </button>
-                )}
-                {selectedBooking.status !== BOOKING_STATUS.CANCELLED && (
-                  <button
-                    disabled={isCancelling || isSaving}
-                    onClick={() => handleCancel()}
-                    className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/30 transition-all text-slate-300 flex items-center justify-center gap-2"
-                  >
-                    {isCancelling ? <Loader2 className="animate-spin" size={18} /> : <Ban size={18} />}
-                    取消預約
-                  </button>
-                )}
+            <div className="p-8 pt-0 flex gap-3">
+              {tempDepositStatus !== selectedBooking.is_deposit_received && (
                 <button
-                  onClick={() => setSelectedBooking(null)}
-                  disabled={isCancelling}
-                  className="flex-1 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-2xl font-semibold text-white disabled:opacity-50"
+                  disabled={isSaving}
+                  onClick={handleUpdateStatus}
+                  className="flex-[1.5] py-4 bg-emerald-600 rounded-2xl font-bold text-white hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer"
                 >
-                  關閉
+                  {isSaving ? (
+                    <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  )}
+                  儲存訂金狀態
                 </button>
-              </div>
-            </motion.div>
+              )}
+              {selectedBooking.status !== BOOKING_STATUS.CANCELLED && (
+                <button
+                  disabled={isCancelling || isSaving}
+                  onClick={() => handleCancel()}
+                  className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/30 transition-all text-slate-300 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isCancelling ? (
+                    <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                  )}
+                  取消預約
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedBooking(null)}
+                disabled={isCancelling}
+                className="flex-1 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-2xl font-semibold text-white disabled:opacity-50 cursor-pointer"
+              >
+                關閉
+              </button>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   )
 }
@@ -357,11 +355,11 @@ export default function BookingList({
 function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-2 text-slate-300 text-ms uppercase font-mono">
+      <div className="flex items-center gap-2 text-slate-300 text-ms uppercase font-mono font-bold">
         {icon}
         <span>{label}</span>
       </div>
-      <p className="text-white font-medium pl-6">{value}</p>
+      <p className="text-white font-bold pl-6">{value}</p>
     </div>
   )
 }

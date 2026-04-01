@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { initLiff, getLiffProfile } from '@/lib/liff'
-import { Loader2 } from 'lucide-react'
 import { CONFIG_ENV } from '@/lib/env'
 
 /**
@@ -46,7 +45,9 @@ export default function LiffInitializer() {
       <div className="relative">
         <div className="absolute inset-0 bg-purple-200/50 blur-[40px] rounded-full" />
         {/* 調整 Loader 顏色，使其在淺色背景下更顯眼 */}
-        <Loader2 className="animate-spin mb-6 text-cyan-600 relative z-10" size={48} />
+        <div className="relative z-10 mb-6">
+          <svg className="animate-spin text-cyan-600 h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+        </div>
       </div>
 
       {/* 標題：調整漸層色深一點，確保閱讀清晰度 */}

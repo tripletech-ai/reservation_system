@@ -11,7 +11,7 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+
 import { registerMember } from '@/app/actions/members'
 import { useAlert } from '@/components/ui/DialogProvider'
 
@@ -143,10 +143,7 @@ function RegisterForm() {
           </h1>
         </header>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+        <div
           className="bg-white/[0.03] backdrop-blur-[40px] border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)]"
         >
           <div className="space-y-6">
@@ -279,7 +276,7 @@ function RegisterForm() {
               <>確認送出註冊 <ArrowRight size={22} /></>
             )}
           </button>
-        </motion.div>
+        </div>
 
         {/* Footer */}
         <footer className="mt-12 text-center opacity-40">

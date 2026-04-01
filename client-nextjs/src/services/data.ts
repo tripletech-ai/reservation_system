@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { Member, Booking, ScheduleMenu, ScheduleTime, ScheduleOverride, Event, Manager, BookingCache } from '@/types'
-import { tr } from 'framer-motion/client'
 // ... (some code)
 export async function getScheduleMenus(managerUid: string): Promise<ScheduleMenu[]> {
   try {

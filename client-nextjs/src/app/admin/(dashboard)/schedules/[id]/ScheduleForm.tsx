@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+
 import {
   ChevronLeft, Save, Plus, Trash2, Clock, Users, Loader2, Calendar, ArrowRight, X, Edit
 } from 'lucide-react'
@@ -336,7 +336,7 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
                           onClick={() => toggleDay(dow, enabled)}
                           className={`relative w-11 h-6 rounded-full transition-all duration-300 outline-none flex items-center ${enabled ? 'bg-purple-600' : 'bg-slate-700'}`}
                         >
-                          <motion.div animate={{ x: enabled ? 22 : 4 }} className="w-4 h-4 bg-white rounded-full shadow-lg" />
+                          <div className="w-4 h-4 bg-white rounded-full shadow-lg" />
                         </button>
                         <div className="flex flex-wrap items-center gap-3 md:gap-4">
                           <span className={`text-lg font-black transition-colors ${enabled ? 'text-white' : 'text-slate-300'}`}>{label}</span>
@@ -349,7 +349,7 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
                                 onClick={() => updateDayLastBooking(dow, { is_open_last_booking_time: !firstSlot.is_open_last_booking_time })}
                                 className={`w-7 h-4 rounded-full transition-all relative flex items-center ${firstSlot.is_open_last_booking_time ? 'bg-cyan-600' : 'bg-slate-800'}`}
                               >
-                                <motion.div animate={{ x: firstSlot.is_open_last_booking_time ? 14 : 2 }} className="w-2.5 h-2.5 bg-white rounded-full shadow-sm" />
+                                <div className="w-2.5 h-2.5 bg-white rounded-full shadow-sm" />
                               </button>
                               <select
                                 disabled={!firstSlot.is_open_last_booking_time}
@@ -501,116 +501,112 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
       </div>
 
       {/* Override Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-[#0a0a0a] border border-white/10 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
-            >
-              <div className="p-6 md:p-8 flex justify-between items-center border-b border-white/5 bg-white/5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center border border-purple-500/20">
-                    <Calendar size={24} className="text-purple-400" />
-                  </div>
-                  <h3 className="text-xl font-black text-white">{editingOverride ? '編輯' : '新增'}覆寫日期</h3>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="bg-[#0a0a0a] border border-white/10 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+          >
+            <div className="p-6 md:p-8 flex justify-between items-center border-b border-white/5 bg-white/5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center border border-purple-500/20">
+                  <Calendar size={24} className="text-purple-400" />
                 </div>
-                <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-slate-400 hover:text-white"><X size={26} /></button>
+                <h3 className="text-xl font-black text-white">{editingOverride ? '編輯' : '新增'}覆寫日期</h3>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-slate-400 hover:text-white"><X size={26} /></button>
+            </div>
+
+            <form onSubmit={handleSaveOverride} className="p-6 md:p-8 overflow-y-auto no-scrollbar space-y-6">
+              <div className="flex items-center justify-between bg-white/10 border border-white/10 p-5 rounded-2xl shadow-inner group">
+                <div className="flex flex-col">
+                  <span className="text-xm font-black text-white">全天公休</span>
+                  <span className="text-[14px] font-bold text-slate-300 tracking-tight mt-0.5">關閉該日所有預約時段</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTempIsClosed(!tempIsClosed)}
+                  className={`relative w-12 h-6 rounded-full transition-all duration-300 outline-none flex items-center ${tempIsClosed ? 'bg-rose-600 shadow-lg shadow-rose-500/20' : 'bg-slate-700'}`}
+                >
+                  <div style={{ x: tempIsClosed ? 26 : 4 }} className="w-4 h-4 bg-white rounded-full shadow-md" />
+                </button>
               </div>
 
-              <form onSubmit={handleSaveOverride} className="p-6 md:p-8 overflow-y-auto no-scrollbar space-y-6">
-                <div className="flex items-center justify-between bg-white/10 border border-white/10 p-5 rounded-2xl shadow-inner group">
-                  <div className="flex flex-col">
-                    <span className="text-xm font-black text-white">全天公休</span>
-                    <span className="text-[14px] font-bold text-slate-300 tracking-tight mt-0.5">關閉該日所有預約時段</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setTempIsClosed(!tempIsClosed)}
-                    className={`relative w-12 h-6 rounded-full transition-all duration-300 outline-none flex items-center ${tempIsClosed ? 'bg-rose-600 shadow-lg shadow-rose-500/20' : 'bg-slate-700'}`}
-                  >
-                    <motion.div animate={{ x: tempIsClosed ? 26 : 4 }} className="w-4 h-4 bg-white rounded-full shadow-md" />
-                  </button>
-                </div>
+              <div className="space-y-3">
+                <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest pl-1">覆寫日期</label>
+                <input
+                  name="date"
+                  type="date"
+                  required
+                  min={TimeUtils.getDatePart()}
+                  onChange={handleDateChange}
+                  defaultValue={TimeUtils.getDatePart(editingOverride?.override_start_time)}
+                  className="w-full bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-white font-bold outline-none focus:border-purple-500/50 focus:bg-white/15 transition-all shadow-inner [color-scheme:dark]"
+                />
+              </div>
 
-                <div className="space-y-3">
-                  <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest pl-1">覆寫日期</label>
-                  <input
-                    name="date"
-                    type="date"
-                    required
-                    min={TimeUtils.getDatePart()}
-                    onChange={handleDateChange}
-                    defaultValue={TimeUtils.getDatePart(editingOverride?.override_start_time)}
-                    className="w-full bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-white font-bold outline-none focus:border-purple-500/50 focus:bg-white/15 transition-all shadow-inner [color-scheme:dark]"
-                  />
-                </div>
-
-                {!tempIsClosed && (
-                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest pl-1">開始</label>
-                        <select
-                          name="startTime"
-                          defaultValue={TimeUtils.getTimePart(editingOverride?.override_start_time) || '09:00'}
-                          className="w-full bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-white font-black font-mono outline-none focus:border-purple-500/50 appearance-none shadow-inner cursor-pointer"
-                        >
-                          {TIME_OPTIONS.map(t => <option key={t} value={t} className="bg-[#111]">{t}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-3">
-                        <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest pl-1">結束</label>
-                        <select
-                          name="endTime"
-                          defaultValue={TimeUtils.getTimePart(editingOverride?.override_end_time) || '18:00'}
-                          className="w-full bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-white font-black font-mono outline-none focus:border-purple-500/50 appearance-none shadow-inner cursor-pointer"
-                        >
-                          {END_TIME_OPTIONS.map(t => <option key={t} value={t} className="bg-[#111]">{t}</option>)}
-                        </select>
-                      </div>
+              {!tempIsClosed && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest pl-1">開始</label>
+                      <select
+                        name="startTime"
+                        defaultValue={TimeUtils.getTimePart(editingOverride?.override_start_time) || '09:00'}
+                        className="w-full bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-white font-black font-mono outline-none focus:border-purple-500/50 appearance-none shadow-inner cursor-pointer"
+                      >
+                        {TIME_OPTIONS.map(t => <option key={t} value={t} className="bg-[#111]">{t}</option>)}
+                      </select>
                     </div>
                     <div className="space-y-3">
-                      <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest pl-1">最大預約容量</label>
-                      <div className="flex items-center gap-4 bg-white/10 border border-white/10 rounded-2xl px-5 py-4 shadow-inner">
-                        <Users size={20} className="text-cyan-400 shrink-0" />
-                        <input
-                          name="capacity"
-                          type="number"
-                          min={1}
-                          defaultValue={editingOverride?.max_capacity || 2}
-                          className="bg-transparent text-white font-black flex-1 focus:outline-none placeholder-slate-600"
-                        />
-                      </div>
+                      <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest pl-1">結束</label>
+                      <select
+                        name="endTime"
+                        defaultValue={TimeUtils.getTimePart(editingOverride?.override_end_time) || '18:00'}
+                        className="w-full bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-white font-black font-mono outline-none focus:border-purple-500/50 appearance-none shadow-inner cursor-pointer"
+                      >
+                        {END_TIME_OPTIONS.map(t => <option key={t} value={t} className="bg-[#111]">{t}</option>)}
+                      </select>
                     </div>
                   </div>
-                )}
-
-                <div className="pt-4 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-95"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSavingOverride}
-                    className="flex-2 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-2xl font-black text-white shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                  >
-                    {isSavingOverride ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                    <span>儲存覆寫</span>
-                  </button>
+                  <div className="space-y-3">
+                    <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest pl-1">最大預約容量</label>
+                    <div className="flex items-center gap-4 bg-white/10 border border-white/10 rounded-2xl px-5 py-4 shadow-inner">
+                      <Users size={20} className="text-cyan-400 shrink-0" />
+                      <input
+                        name="capacity"
+                        type="number"
+                        min={1}
+                        defaultValue={editingOverride?.max_capacity || 2}
+                        className="bg-transparent text-white font-black flex-1 focus:outline-none placeholder-slate-600"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </form>
-            </motion.div>
+              )}
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingOverride}
+                  className="flex-2 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-2xl font-black text-white shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  {isSavingOverride ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                  <span>儲存覆寫</span>
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </AnimatePresence>
-    </div>
+        </div>
+      )}
+    </div >
   )
 }

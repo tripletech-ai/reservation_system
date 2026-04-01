@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, Save, Plus, Trash2, Clock, Mail, Phone,
   FileText, Loader2, ArrowRight, X, Layout, CheckCircle2,
@@ -279,91 +278,90 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
       </div>
 
       {/* Options Editing Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-[#111] border border-white/20 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative z-10">
-              <div className="p-8 pb-4 flex justify-between items-center border-b border-white/5">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                  <Layout className="text-cyan-400" /> 服務選單編輯
-                </h3>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400"><X size={24} /></button>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="bg-[#111] border border-white/20 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative z-10">
+            <div className="p-8 pb-4 flex justify-between items-center border-b border-white/5">
+              <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                <Layout className="text-cyan-400" /> 服務選單編輯
+              </h3>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400"><X size={24} /></button>
+            </div>
+
+            <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+              <div className="space-y-3">
+                <label className="text-ms font-bold text-slate-300 uppercase tracking-widest pl-1">選單分類名稱</label>
+                <input
+                  type="text"
+                  value={tempOptions.name}
+                  onChange={(e) => setTempOptions({ ...tempOptions, name: e.target.value })}
+                  placeholder="例如：專業按摩服務、剪髮服務..."
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-cyan-500/50 outline-none transition-all"
+                />
               </div>
 
-              <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
-                <div className="space-y-3">
-                  <label className="text-ms font-bold text-slate-300 uppercase tracking-widest pl-1">選單分類名稱</label>
-                  <input
-                    type="text"
-                    value={tempOptions.name}
-                    onChange={(e) => setTempOptions({ ...tempOptions, name: e.target.value })}
-                    placeholder="例如：專業按摩服務、剪髮服務..."
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-cyan-500/50 outline-none transition-all"
-                  />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <label className="text-ms font-bold text-slate-300 uppercase tracking-widest pl-1">服務項目</label>
+                  <button
+                    onClick={() => setTempOptions({ ...tempOptions, items: [...tempOptions.items, { title: '', duration: 30 }] })}
+                    className="text-ms font-bold text-cyan-400 flex items-center gap-1 hover:text-cyan-300"
+                  >
+                    <Plus size={14} /> 新增項目
+                  </button>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <label className="text-ms font-bold text-slate-300 uppercase tracking-widest pl-1">服務項目</label>
-                    <button
-                      onClick={() => setTempOptions({ ...tempOptions, items: [...tempOptions.items, { title: '', duration: 30 }] })}
-                      className="text-ms font-bold text-cyan-400 flex items-center gap-1 hover:text-cyan-300"
-                    >
-                      <Plus size={14} /> 新增項目
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {tempOptions.items.map((item: any, idx: number) => (
-                      <div key={idx} className="flex gap-4 items-center bg-white/5 p-4 rounded-2xl border border-white/10 group/row focus-within:border-cyan-500/30 transition-all">
+                <div className="space-y-3">
+                  {tempOptions.items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex gap-4 items-center bg-white/5 p-4 rounded-2xl border border-white/10 group/row focus-within:border-cyan-500/30 transition-all">
+                      <input
+                        type="text"
+                        value={item.title}
+                        placeholder="項目名稱"
+                        onChange={(e) => {
+                          const newItems = [...tempOptions.items]
+                          newItems[idx].title = e.target.value
+                          setTempOptions({ ...tempOptions, items: newItems })
+                        }}
+                        className="flex-1 bg-transparent text-white font-semibold outline-none border-b border-transparent focus:border-cyan-500/50"
+                      />
+                      <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
                         <input
-                          type="text"
-                          value={item.title}
-                          placeholder="項目名稱"
+                          type="number"
+                          value={item.duration}
                           onChange={(e) => {
                             const newItems = [...tempOptions.items]
-                            newItems[idx].title = e.target.value
+                            newItems[idx].duration = parseInt(e.target.value) || 0
                             setTempOptions({ ...tempOptions, items: newItems })
                           }}
-                          className="flex-1 bg-transparent text-white font-semibold outline-none border-b border-transparent focus:border-cyan-500/50"
+                          className="w-12 bg-transparent text-center text-white font-mono text-xm outline-none"
                         />
-                        <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
-                          <input
-                            type="number"
-                            value={item.duration}
-                            onChange={(e) => {
-                              const newItems = [...tempOptions.items]
-                              newItems[idx].duration = parseInt(e.target.value) || 0
-                              setTempOptions({ ...tempOptions, items: newItems })
-                            }}
-                            className="w-12 bg-transparent text-center text-white font-mono text-xm outline-none"
-                          />
-                          <span className="text-slate-600 text-ms">min</span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const newItems = tempOptions.items.filter((_: any, i: number) => i !== idx)
-                            setTempOptions({ ...tempOptions, items: newItems })
-                          }}
-                          className="p-2 text-rose-500/50 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        <span className="text-slate-600 text-ms">min</span>
                       </div>
-                    ))}
-                  </div>
+                      <button
+                        onClick={() => {
+                          const newItems = tempOptions.items.filter((_: any, i: number) => i !== idx)
+                          setTempOptions({ ...tempOptions, items: newItems })
+                        }}
+                        className="p-2 text-rose-500/50 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
+            </div>
 
-              <div className="p-8 pt-4 bg-white/5 flex gap-4">
-                <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-slate-400">取消</button>
-                <button onClick={handleSaveOptions} className="flex-1 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl font-bold text-white shadow-xl shadow-cyan-500/20">儲存選單</button>
-              </div>
-            </motion.div>
+            <div className="p-8 pt-4 bg-white/5 flex gap-4">
+              <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-slate-400">取消</button>
+              <button onClick={handleSaveOptions} className="flex-1 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl font-bold text-white shadow-xl shadow-cyan-500/20">儲存選單</button>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   )
 }

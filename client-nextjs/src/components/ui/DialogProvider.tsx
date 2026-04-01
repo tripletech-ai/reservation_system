@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { Dialog } from "./Dialog";
 import { Button } from "./Button";
-import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
 
 type DialogType = "info" | "success" | "warning" | "error";
 
@@ -60,11 +59,39 @@ export const DialogProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [options, resolvePromise]);
 
   const Icon = () => {
+    const className = "w-12 h-12 mb-4";
     switch (options?.type) {
-      case "success": return <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />;
-      case "warning": return <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />;
-      case "error": return <XCircle className="w-12 h-12 text-red-500 mb-4" />;
-      default: return <Info className="w-12 h-12 text-blue-500 mb-4" />;
+      case "success": 
+        return (
+          <svg className={`${className} text-green-500`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        );
+      case "warning": 
+        return (
+          <svg className={`${className} text-yellow-500`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        );
+      case "error": 
+        return (
+          <svg className={`${className} text-red-500`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+        );
+      default: 
+        return (
+          <svg className={`${className} text-blue-500`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        );
     }
   };
 

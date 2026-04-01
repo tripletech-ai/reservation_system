@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+
 import {
   Save, Loader2, X, Zap, ArrowLeft,
   PlusCircle, Trash2,
@@ -16,7 +16,7 @@ import { getSession } from '@/app/actions/superAuth'
 import { useSuperAdmin } from '../../SuperAdminContext'
 import { NotifyEntry, QItem } from '@/types'
 import { useAlert } from '@/components/ui/DialogProvider'
-import { supabaseAdmin } from '@/lib/supabase' 
+import { supabaseAdmin } from '@/lib/supabase'
 import { hashPassword } from '@/lib/auth'
 import { ROUTES } from '@/constants/routes'
 import { MANAGER_LEVEL } from '@/constants/common'
@@ -56,31 +56,27 @@ function MultiSelect({
           <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
-        <AnimatePresence>
-          {isOpen && (
-            <>
-              <div className="fixed inset-0 z-[80]" onClick={() => setIsOpen(false)} />
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                className="absolute left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-2 z-[90] max-h-48 overflow-y-auto custom-scrollbar"
-              >
-                {options.map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => toggle(opt)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all mb-1 ${selected.includes(opt) ? 'bg-emerald-500/10 text-emerald-400' : 'hover:bg-white/5 text-slate-400'}`}
-                  >
-                    <span className="text-ms font-bold">{opt}</span>
-                    {selected.includes(opt) && <Check size={14} />}
-                  </button>
-                ))}
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-[80]" onClick={() => setIsOpen(false)} />
+            <div
+              className="absolute left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-2 z-[90] max-h-48 overflow-y-auto custom-scrollbar"
+            >
+              {options.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => toggle(opt)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all mb-1 ${selected.includes(opt) ? 'bg-emerald-500/10 text-emerald-400' : 'hover:bg-white/5 text-slate-400'}`}
+                >
+                  <span className="text-ms font-bold">{opt}</span>
+                  {selected.includes(opt) && <Check size={14} />}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -115,19 +111,19 @@ function LineNotifyBuilder({
 
   return (
     <div className="space-y-4">
-      <AnimatePresence>
-        {value.map((entry, i) => (
-          <NotifyEntryRow
-            key={i}
-            index={i}
-            entry={entry}
-            procedures={notifyProcedures}
-            allKeys={value.map(v => v.key).filter(k => k.trim())}
-            onUpdate={update}
-            onRemove={() => remove(i)}
-          />
-        ))}
-      </AnimatePresence>
+
+      {value.map((entry, i) => (
+        <NotifyEntryRow
+          key={i}
+          index={i}
+          entry={entry}
+          procedures={notifyProcedures}
+          allKeys={value.map(v => v.key).filter(k => k.trim())}
+          onUpdate={update}
+          onRemove={() => remove(i)}
+        />
+      ))}
+
       <button
         type="button"
         onClick={addEntry}
@@ -146,10 +142,7 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allKeys 
   const selectedProc = newProcedures.find((p: any) => p.uid === entry.uid) || newProcedures[0];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+    <div
       className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 space-y-4 relative"
     >
       <div className="flex items-center justify-between gap-4">
@@ -176,45 +169,41 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allKeys 
             <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
           </button>
 
-          <AnimatePresence>
-            {isOpen && (
-              <>
-                <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)} />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                  className="absolute top-full right-0 mt-2 w-64 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl p-2 z-[70] overflow-hidden backdrop-blur-xl"
-                >
-                  <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                    {newProcedures.map((p: any) => (
-                      <button
-                        key={p.uid}
-                        type="button"
-                        onClick={() => {
-                          onUpdate(index, {
-                            name: p.name,
-                            value: p.sample || "",
-                            has_text: p.has_text,
-                            procedure_name: p.procedure_name,
-                            uid: p.uid,
-                            ...(p.key && { key: p.key })
-                          })
-                          setIsOpen(false)
-                        }}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-left group"
-                      >
-                        <span className={`text-ms font-bold ${selectedProc?.uid === p.uid ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white'}`}>
-                          {p.name}
-                        </span>
-                        {selectedProc?.uid === p.uid && <Check size={14} className="text-emerald-400" />}
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+
+          {isOpen && (
+            <>
+              <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)} />
+              <div
+                className="absolute top-full right-0 mt-2 w-64 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl p-2 z-[70] overflow-hidden backdrop-blur-xl"
+              >
+                <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                  {newProcedures.map((p: any) => (
+                    <button
+                      key={p.uid}
+                      type="button"
+                      onClick={() => {
+                        onUpdate(index, {
+                          name: p.name,
+                          value: p.sample || "",
+                          has_text: p.has_text,
+                          procedure_name: p.procedure_name,
+                          uid: p.uid,
+                          ...(p.key && { key: p.key })
+                        })
+                        setIsOpen(false)
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-left group"
+                    >
+                      <span className={`text-ms font-bold ${selectedProc?.uid === p.uid ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white'}`}>
+                        {p.name}
+                      </span>
+                      {selectedProc?.uid === p.uid && <Check size={14} className="text-emerald-400" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <button type="button" onClick={onRemove} className="p-2 text-slate-700 hover:text-rose-500 transition-colors">
@@ -245,7 +234,7 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allKeys 
       {!selectedProc?.has_text && (
         <MultiSelect label="未有資料時關鍵字" options={allKeys} selected={entry.no_data_keys || []} onChange={(v) => onUpdate(index, { no_data_keys: v })} />
       )}
-    </motion.div>
+    </div>
   )
 }
 
@@ -281,35 +270,32 @@ function QuestionnaireBuilder({
 
   return (
     <div className="space-y-3">
-      <AnimatePresence>
-        {value.map((q, qIdx) => (
-          <motion.div
-            key={qIdx}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 space-y-3"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xm font-black text-purple-500 uppercase tracking-widest whitespace-nowrap">Q{qIdx + 1}</span>
-              <input value={q.title} onChange={(e) => updateTitle(qIdx, e.target.value)} placeholder="題目標題" className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-4 text-base text-white focus:outline-none focus:border-purple-500/40 transition-all font-bold" />
-              <button type="button" onClick={() => removeQuestion(qIdx)} className="p-2 text-slate-600 hover:text-rose-400 transition-colors"><Trash2 size={15} /></button>
-            </div>
-            <div className="pl-8 space-y-2">
-              <AnimatePresence>
-                {q.options.map((opt, oIdx) => (
-                  <motion.div key={oIdx} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }} className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
-                    <input value={opt.title} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} placeholder={`選項 ${oIdx + 1}`} className="flex-1 bg-white/[0.02] border border-white/[0.07] rounded-lg py-1.5 px-3 text-xm text-white focus:outline-none focus:border-cyan-500/30 transition-all" />
-                    <button type="button" onClick={() => removeOption(qIdx, oIdx)} className="text-slate-700 hover:text-rose-400 transition-colors"><X size={13} /></button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              <button type="button" onClick={() => addOption(qIdx)} className="flex items-center gap-1.5 text-xm text-slate-600 hover:text-cyan-400 transition-colors font-bold tracking-wider uppercase mt-1"><PlusCircle size={13} /> 新增選項</button>
-            </div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+
+      {value.map((q, qIdx) => (
+        <div
+          key={qIdx}
+          className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 space-y-3"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xm font-black text-purple-500 uppercase tracking-widest whitespace-nowrap">Q{qIdx + 1}</span>
+            <input value={q.title} onChange={(e) => updateTitle(qIdx, e.target.value)} placeholder="題目標題" className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-4 text-base text-white focus:outline-none focus:border-purple-500/40 transition-all font-bold" />
+            <button type="button" onClick={() => removeQuestion(qIdx)} className="p-2 text-slate-600 hover:text-rose-400 transition-colors"><Trash2 size={15} /></button>
+          </div>
+          <div className="pl-8 space-y-2">
+
+            {q.options.map((opt, oIdx) => (
+              <div key={oIdx} className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
+                <input value={opt.title} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} placeholder={`選項 ${oIdx + 1}`} className="flex-1 bg-white/[0.02] border border-white/[0.07] rounded-lg py-1.5 px-3 text-xm text-white focus:outline-none focus:border-cyan-500/30 transition-all" />
+                <button type="button" onClick={() => removeOption(qIdx, oIdx)} className="text-slate-700 hover:text-rose-400 transition-colors"><X size={13} /></button>
+              </div>
+            ))}
+
+            <button type="button" onClick={() => addOption(qIdx)} className="flex items-center gap-1.5 text-xm text-slate-600 hover:text-cyan-400 transition-colors font-bold tracking-wider uppercase mt-1"><PlusCircle size={13} /> 新增選項</button>
+          </div>
+        </div>
+      ))}
+
       <button type="button" onClick={addQuestion} className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-white/10 rounded-2xl text-ms text-slate-600 hover:text-purple-400 hover:border-purple-500/30 transition-all font-black uppercase tracking-widest"><PlusCircle size={16} /> 新增題目</button>
     </div>
   )
@@ -334,9 +320,9 @@ function Section({
         <p className={`text-xm font-black ${colorMap[color] ?? 'text-white'} uppercase tracking-[0.2em]`}>{title}</p>
         {open ? <ChevronUp size={16} className="text-slate-300" /> : <ChevronDown size={16} className="text-slate-300" />}
       </button>
-      <AnimatePresence>
-        {open && (<motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden"><div className="px-5 pb-5 space-y-4">{children}</div></motion.div>)}
-      </AnimatePresence>
+
+      {open && (<div className="overflow-hidden"><div className="px-5 pb-5 space-y-4">{children}</div></div>)}
+
     </div>
   )
 }
