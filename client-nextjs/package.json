@@ -12,6 +12,7 @@
   "dependencies": {
     "@line/liff": "^2.28.0",
     "@line/liff-mock": "^1.0.4",
+    "@next/bundle-analyzer": "^16.2.2",
     "@supabase/supabase-js": "^2.99.3",
     "bcrypt-ts": "^8.0.1",
     "dayjs": "^1.11.20",

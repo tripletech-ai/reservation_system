@@ -7,7 +7,7 @@ import { MANAGER_LEVEL } from '@/constants/common'
 
 export const runtime = "edge";
 
-export default async function EventEditPage({ params }: { params: { id: string } }) {
+export default async function EventEditPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession(MANAGER_LEVEL.ADMIN)
   if (!session) return null
 
