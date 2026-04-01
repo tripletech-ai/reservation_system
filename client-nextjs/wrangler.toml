@@ -1,9 +1,10 @@
+# c:\Users\bill.liu\Desktop\Project\SideProject\reservation_system\client-nextjs\wrangler.toml
+
 name = "reservation"
 compatibility_date = "2026-04-01"
-
-# 移除前面的目錄名稱，直接指向 output
 pages_build_output_dir = ".vercel/output/static"
 
 [vars]
-# 確保 Node 版本夠新
 NODE_VERSION = "20"
+# 新增這行來解決相依性衝突
+NPM_FLAGS = "--legacy-peer-deps"
