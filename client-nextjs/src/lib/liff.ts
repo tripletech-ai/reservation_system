@@ -1,13 +1,12 @@
 import liff from '@line/liff';
-import { LiffMockPlugin } from '@line/liff-mock';
 import { CONFIG_ENV } from './env';
 
 /**
- * 初始化 LIFF，開發模式下會啟用 Mock
+ * 初始化 LIFF
  */
 export const initLiff = async (liffId: string) => {
-  if (!liffId) {
-    console.warn("LIFF ID is missing");
+  if (!liffId || liffId === 'undefined') {
+    console.warn("LIFF ID is missing or undefined");
     return;
   }
 
@@ -15,27 +14,7 @@ export const initLiff = async (liffId: string) => {
   if (liff.id === liffId) return;
 
   try {
-    if (CONFIG_ENV.nodeEnv === 'development') {
-      liff.use(new LiffMockPlugin());
-      await (liff as any).init({
-        liffId,
-        mock: true,
-      });
-
-      // 設定開發環境的 Mock 資料
-      const mockAdapter = (liff as any).getMockAdapter();
-      mockAdapter.setLoggedIn(true);
-      mockAdapter.setProfile({
-        userId: 'U1234567890abcdef1234567890abcdef',
-        displayName: '測試人員(Mock)',
-        pictureUrl: 'https://placehold.co/200',
-        statusMessage: 'LIFF Mock Mode',
-      });
-
-    } else {
-      await liff.init({ liffId });
-
-    }
+    await liff.init({ liffId });
 
     if (!liff.isLoggedIn()) {
       liff.login();

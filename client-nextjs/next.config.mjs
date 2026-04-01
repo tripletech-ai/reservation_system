@@ -9,6 +9,12 @@ const nextConfig = {
     // 你原本的 webpack, experimental, turbo 等設定放在這裡
     experimental: {
         serverMinification: true,
+        optimizePackageImports: [
+            'lucide-react',
+            'framer-motion',
+            '@supabase/supabase-js',
+            'lucide-react/dist/esm/icons'
+        ],
     },
 };
 

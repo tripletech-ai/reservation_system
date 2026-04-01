@@ -1,10 +1,11 @@
 import { getBookingInfo } from '@/services/data'
 import { notFound, redirect } from 'next/navigation'
-import BookingClient from './BookingClient'
+import BookingWrapper from './BookingWrapper'
 import LiffInitializer from '@/components/line/LiffInitializer'
 import { BookingClientProps } from '@/types';
 import { ROUTES } from '@/constants/routes';
 import { CONFIG_ENV } from '@/lib/env';
+
 export const runtime = "edge";
 
 type Props = {
@@ -16,19 +17,15 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const { websiteName, dynamicUrl } = await params
   const { schedule_menu_uid, line_uid } = await searchParams
 
-  // 1. 如果 URL 缺少 line_uid，則先進入 Client Side 的 LIFF 初始化與身分確認
   if (CONFIG_ENV.nodeEnv != 'development' && !line_uid) {
     return <LiffInitializer />
   }
-
 
   const data = await getBookingInfo(websiteName, dynamicUrl, schedule_menu_uid, line_uid)
   if (!data) {
     notFound()
   }
 
-
-  // 如果提供了 line_uid 但找不到會員，跳轉到註冊頁面 (依據參考邏輯)
   if (line_uid && !data.is_member) {
     const query = new URLSearchParams({
       line_uid,
@@ -49,7 +46,5 @@ export default async function BookingPage({ params, searchParams }: Props) {
     line_uid: line_uid || '',
   }
 
-  return (
-    <BookingClient {...info} />
-  )
+  return <BookingWrapper {...info} />
 }

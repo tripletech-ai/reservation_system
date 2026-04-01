@@ -1,7 +1,6 @@
-
 import { getEvents, getScheduleMenus } from '@/services/data'
 import { redirect } from 'next/navigation'
-import EventList from './EventList'
+import EventListWrapper from './EventListWrapper'
 import { MANAGER_LEVEL } from '@/constants/common'
 import { getSession } from '@/app/actions/superAuth'
 import { ROUTES } from '@/constants/routes'
@@ -11,9 +10,6 @@ export const runtime = "edge";
 export default async function EventsPage() {
   const session = await getSession(MANAGER_LEVEL.ADMIN)
   if (!session) redirect(ROUTES.LOGIN)
-
-
-
 
   const [events, menus] = await Promise.all([
     getEvents(session.uid),
@@ -29,7 +25,7 @@ export default async function EventsPage() {
         </div>
       </div>
 
-      <EventList events={events} menus={menus} managerUid={session.uid} managerWebsiteName={session.website_name} />
+      <EventListWrapper events={events} menus={menus} managerUid={session.uid} managerWebsiteName={session.website_name} />
     </div>
   )
 }
