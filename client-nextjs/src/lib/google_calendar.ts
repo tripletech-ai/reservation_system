@@ -1,11 +1,15 @@
 import { GasPayload } from "@/types";
+import { CONFIG_ENV } from "./env";
 
-
-const GAS_URL = process.env.NEXT_PUBLIC_GAS_URL!
+const GAS_URL = CONFIG_ENV.google.gasUrl;
 
 export class GoogleCalendarService {
 
     static async sync(payload: GasPayload) {
+        if (!GAS_URL) {
+            console.warn("GAS_URL is not defined, skipping Google Calendar sync.");
+            return "SKIPPED";
+        }
         try {
             const response = await fetch(GAS_URL, {
                 method: "POST",
