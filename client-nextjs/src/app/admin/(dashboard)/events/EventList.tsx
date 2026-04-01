@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Clock, Edit2, Trash2, ExternalLink, Search, Box } from 'lucide-react'
-import type { EventListProps } from '@/types'
+import { Plus, Clock, Edit2, Trash2, ExternalLink, Search, Box, Copy, Check } from 'lucide-react'
+import type { EventListProps, ScheduleMenu, Event } from '@/types'
 import { deleteEvent } from '@/app/actions/events'
 import { useRouter } from 'next/navigation'
 import { useAlert } from '@/components/ui/DialogProvider'
@@ -15,6 +15,20 @@ export default function EventList({ events, menus, managerUid, managerWebsiteNam
   const { showAlert, showConfirm } = useAlert()
   const [searchTerm, setSearchTerm] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent, event: Event, sm: { uid: string }) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}`;
+
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    });
+  };
+
 
   const filteredEvents = events.filter(e =>
     e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -109,20 +123,43 @@ export default function EventList({ events, menus, managerUid, managerWebsiteNam
                           selectedMenus.map(sm => {
                             const menuName = menus.find(m => m.uid === sm.uid)?.name || '未知時程'
                             return (
-                              <button
-                                key={sm.uid}
-                                onClick={() => {
-                                  if (!event.booking_dynamic_url) return
-                                  const url = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}`
-                                  window.open(url, '_blank')
-                                }}
-                                disabled={!event.booking_dynamic_url}
-                                className={`px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-[14px] flex items-center gap-1.5 transition-all ${event.booking_dynamic_url ? 'text-slate-300 hover:bg-purple-500/10 hover:border-purple-500/30 hover:text-purple-400 cursor-pointer' : 'text-slate-600 cursor-not-allowed opacity-50'
-                                  }`}
-                              >
-                                <ExternalLink size={10} className={event.booking_dynamic_url ? "text-purple-400" : "text-slate-600"} />
-                                {menuName}
-                              </button>
+                              <div className="flex items-center gap-1">
+                                {/* 1. 原本的跳轉按鈕 */}
+                                <button
+                                  key={sm.uid}
+                                  onClick={() => {
+                                    if (!event.booking_dynamic_url) return
+                                    const url = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}`
+                                    window.open(url, '_blank')
+                                  }}
+                                  disabled={!event.booking_dynamic_url}
+                                  className={`px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-[14px] flex items-center gap-1.5 transition-all ${event.booking_dynamic_url
+                                    ? 'text-slate-300 hover:bg-purple-500/10 hover:border-purple-500/30 hover:text-purple-400 cursor-pointer'
+                                    : 'text-slate-600 cursor-not-allowed opacity-50'
+                                    }`}
+                                >
+                                  <ExternalLink size={10} className={event.booking_dynamic_url ? "text-purple-400" : "text-slate-600"} />
+                                  {menuName}
+                                </button>
+
+                                {/* 2. 新增的複製網址按鈕 */}
+                                {event.booking_dynamic_url && (
+                                  <button
+                                    onClick={(e) => handleCopy(e, event, sm)}
+                                    title={copied ? "已複製！" : "複製預約網址"}
+                                    className={`p-1.5 border rounded-lg transition-all duration-300 ${copied
+                                      ? 'bg-green-500/10 border-green-500/50 text-green-400' // 成功時的綠色風格
+                                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-purple-400 hover:border-purple-500/30'
+                                      }`}
+                                  >
+                                    {copied ? (
+                                      <Check size={14} className="animate-in zoom-in duration-300" />
+                                    ) : (
+                                      <Copy size={14} />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
                             )
                           })
                         ) : (
