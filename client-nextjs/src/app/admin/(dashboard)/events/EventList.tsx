@@ -12,14 +12,12 @@ export default function EventList({ events, menus, managerWebsiteName }: EventLi
   const { showAlert, showConfirm } = useAlert()
   const [searchTerm, setSearchTerm] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
 
-  const handleCopy = (e: React.MouseEvent, event: Event, sm: { uid: string }) => {
-    e.stopPropagation()
-    const url = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}`
+  const handleCopy = (url: string) => {
     navigator.clipboard.writeText(url).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopied(url)
+      setTimeout(() => setCopied(null), 2000)
     })
   }
 
@@ -94,18 +92,18 @@ export default function EventList({ events, menus, managerWebsiteName }: EventLi
                   </div>
                   <h3 className="text-xl font-black text-white mb-2 group-hover:text-cyan-400 transition-colors">{event.title}</h3>
                   <p className="text-slate-400 text-xm font-bold line-clamp-2 mb-8">{event.description || '暫無活動說明...'}</p>
-                  
+
                   {hasPublished && (
                     <div className="space-y-3 mb-6">
-                      <p className="text-[14px] font-black text-slate-300 uppercase tracking-widest">測試與分享</p>
                       <div className="flex flex-wrap gap-2">
                         {selectedMenus.map(sm => {
                           const menuName = menus.find(m => m.uid === sm.uid)?.name || '時程'
+                          const url = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}`
+                          const url_no_limit = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}&limit=false`
                           return (
                             <div key={sm.uid} className="flex items-center gap-1">
                               <button
                                 onClick={() => {
-                                  const url = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}`
                                   window.open(url, '_blank')
                                 }}
                                 className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-ms font-bold text-slate-300 hover:bg-purple-500/10 hover:border-purple-500/30 hover:text-purple-400 transition-all cursor-pointer flex items-center gap-1"
@@ -114,10 +112,19 @@ export default function EventList({ events, menus, managerWebsiteName }: EventLi
                                 {menuName}
                               </button>
                               <button
-                                onClick={(e) => handleCopy(e, event, sm)}
-                                className={`p-1.5 border rounded-lg transition-all cursor-pointer ${copied ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-purple-400'}`}
+                                onClick={(e) => handleCopy(url)}
+                                className={`p-1.5 border rounded-lg transition-all cursor-pointer ${copied === url ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-purple-400'}`}
                               >
-                                {copied ? <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> : <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>}
+                                {copied === url ? <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> : <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>}
+                              </button>
+                              <p>
+                                (無限制)
+                              </p>
+                              <button
+                                onClick={(e) => handleCopy(url_no_limit)}
+                                className={`p-1.5 border rounded-lg transition-all cursor-pointer ${copied === url_no_limit ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-purple-400'}`}
+                              >
+                                {copied === url_no_limit ? <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> : <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>}
                               </button>
                             </div>
                           )

@@ -40,7 +40,7 @@ export default function ScheduleList({ menus, managerUid }: ScheduleListProps) {
     setIsCreating(true)
     const res = await createScheduleMenu(managerUid)
     if (res.success && res.uid) {
-      router.push(`/schedules/${res.uid}`)
+      router.push(ROUTES.ADMIN.SCHEDULE_EDIT(res.uid))
     } else {
       showAlert({ message: '建立失敗: ' + (res.message || '未知錯誤'), type: 'error' })
     }

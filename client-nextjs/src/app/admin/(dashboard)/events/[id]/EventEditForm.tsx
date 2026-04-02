@@ -95,7 +95,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between sticky top-0 z-30 pt-4 pb-4 backdrop-blur-xl -mx-4 px-4 bg-black/50">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => router.back()}
             className="p-3 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all shadow-lg group"
@@ -136,11 +136,11 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="請輸入活動或服務標題..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xl font-bold text-white focus:border-purple-500/50 outline-none transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-2 py-1 text-xl font-bold text-white focus:border-purple-500/50 outline-none transition-all"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                 <div className="group">
                   <label className="text-ms font-bold text-slate-300 uppercase mb-2 block">動態網址路徑</label>
                   <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 group-focus-within:border-cyan-500/50 transition-all">
@@ -163,7 +163,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="介紹一下這個預約項目的內容吧..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-purple-500/50 outline-none transition-all resize-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-2 py-1 text-white focus:border-purple-500/50 outline-none transition-all resize-y"
                 />
               </div>
             </div>
@@ -190,11 +190,11 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
                   <Tag size={14} className="text-cyan-500" />
                   <span className="text-lg font-bold text-white">{options.name}</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                   {options.items.map((item: any, idx: number) => (
-                    <div key={idx} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex justify-between items-center group/item hover:border-cyan-500/30 transition-all">
+                    <div key={idx} className="m-1 p-1 px-2 bg-white/5 border border-white/10 rounded-2xl flex-col justify-between items-center group/item hover:border-cyan-500/30 transition-all">
                       <span className="text-slate-200 font-semibold">{item.title}</span>
-                      <div className="flex items-center gap-2 text-slate-300 text-ms">
+                      <div className="flex items-center gap-2 text-slate-400 text-sm">
                         <Clock size={12} />
                         {item.duration} 分鐘
                       </div>
@@ -219,7 +219,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
             <div className="space-y-4">
               <button
                 onClick={() => setIsPhoneRequired(!isPhoneRequired)}
-                className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${isPhoneRequired ? 'bg-purple-500/10 border-purple-500/30 text-white' : 'bg-white/5 border-white/10 text-slate-300'}`}
+                className={`w-full flex items-center justify-between p-1 rounded-2xl border transition-all ${isPhoneRequired ? 'bg-purple-500/10 border-purple-500/30 text-white' : 'bg-white/5 border-white/10 text-slate-300'}`}
               >
                 <div className="flex items-center gap-3">
                   <Phone size={18} className={isPhoneRequired ? 'text-purple-400' : ''} />
@@ -230,7 +230,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
 
               <button
                 onClick={() => setIsEmailRequired(!isEmailRequired)}
-                className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${isEmailRequired ? 'bg-purple-500/10 border-purple-500/30 text-white' : 'bg-white/5 border-white/10 text-slate-300'}`}
+                className={`w-full flex items-center justify-between p-1 rounded-2xl border transition-all ${isEmailRequired ? 'bg-purple-500/10 border-purple-500/30 text-white' : 'bg-white/5 border-white/10 text-slate-300'}`}
               >
                 <div className="flex items-center gap-3">
                   <Mail size={18} className={isEmailRequired ? 'text-purple-400' : ''} />
@@ -260,7 +260,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
                     <button
                       key={menu.uid}
                       onClick={() => toggleMenuVisibility(menu.uid)}
-                      className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${isSelected ? 'bg-cyan-500/10 border-cyan-500/30 text-white' : 'bg-white/5 border-white/10 text-slate-300'}`}
+                      className={`w-full flex items-center gap-3 p-1 rounded-2xl border transition-all text-left ${isSelected ? 'bg-cyan-500/10 border-cyan-500/30 text-white' : 'bg-white/5 border-white/10 text-slate-300'}`}
                     >
                       <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-cyan-500 border-cyan-500 text-black' : 'border-white/10'}`}>
                         {isSelected && <CheckCircle2 size={14} strokeWidth={3} />}
@@ -280,10 +280,10 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
       {/* Options Editing Modal */}
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-1">
           <div onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div className="bg-[#111] border border-white/20 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative z-10">
-            <div className="p-8 pb-4 flex justify-between items-center border-b border-white/5">
+            <div className="p-4 pb-2 flex justify-between items-center border-b border-white/5">
               <h3 className="text-xl font-bold text-white flex items-center gap-3">
                 <Layout className="text-cyan-400" /> 服務選單編輯
               </h3>
@@ -291,31 +291,25 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
             </div>
 
             <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
-              <div className="space-y-3">
+              <div className="space-y-3 mb-6">
                 <label className="text-ms font-bold text-slate-300 uppercase tracking-widest pl-1">選單分類名稱</label>
                 <input
                   type="text"
                   value={tempOptions.name}
                   onChange={(e) => setTempOptions({ ...tempOptions, name: e.target.value })}
                   placeholder="例如：專業按摩服務、剪髮服務..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-cyan-500/50 outline-none transition-all"
+                  className="w-full bg-white/5 border mt-2 border-white/10 rounded-2xl px-2 py-1 text-white font-bold focus:border-cyan-500/50 outline-none transition-all"
                 />
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
                   <label className="text-ms font-bold text-slate-300 uppercase tracking-widest pl-1">服務項目</label>
-                  <button
-                    onClick={() => setTempOptions({ ...tempOptions, items: [...tempOptions.items, { title: '', duration: 30 }] })}
-                    className="text-ms font-bold text-cyan-400 flex items-center gap-1 hover:text-cyan-300"
-                  >
-                    <Plus size={14} /> 新增項目
-                  </button>
                 </div>
 
                 <div className="space-y-3">
                   {tempOptions.items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex gap-4 items-center bg-white/5 p-4 rounded-2xl border border-white/10 group/row focus-within:border-cyan-500/30 transition-all">
+                    <div key={idx} className="flex gap-1 items-center bg-white/5 py-1 px-2 rounded-xl border border-white/5 group/row focus-within:border-cyan-500/30 transition-all">
                       <input
                         type="text"
                         value={item.title}
@@ -327,7 +321,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
                         }}
                         className="flex-1 bg-transparent text-white font-semibold outline-none border-b border-transparent focus:border-cyan-500/50"
                       />
-                      <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                      <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-xl border border-white/10">
                         <input
                           type="number"
                           value={item.duration}
@@ -352,10 +346,16 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
                     </div>
                   ))}
                 </div>
+                <button
+                  onClick={() => setTempOptions({ ...tempOptions, items: [...tempOptions.items, { title: '', duration: 30 }] })}
+                  className="text-ms font-bold text-cyan-400 flex items-center gap-1 hover:text-cyan-300"
+                >
+                  <Plus size={14} /> 新增項目
+                </button>
               </div>
             </div>
 
-            <div className="p-8 pt-4 bg-white/5 flex gap-4">
+            <div className="p-8 pt-4 bg-white/5 flex gap-1">
               <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-slate-400">取消</button>
               <button onClick={handleSaveOptions} className="flex-1 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl font-bold text-white shadow-xl shadow-cyan-500/20">儲存選單</button>
             </div>
