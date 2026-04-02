@@ -185,6 +185,7 @@ export type QItem = {
 
 // ─── Line Notify 問卷式填寫元件 ───────────────────────────────
 export type NotifyEntry = {
+  instanceId?: string;
   key: string;
   value: string,
   sample: string,
@@ -193,7 +194,7 @@ export type NotifyEntry = {
   has_text: boolean,
   procedure_name: string,
   columns_json: string,
-  next_service_keys?: string[],
+  more_keys?: string[],
   no_data_keys?: string[]
 }
 
