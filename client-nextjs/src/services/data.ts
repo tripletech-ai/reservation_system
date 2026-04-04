@@ -1,3 +1,4 @@
+import { BOOKING_STATUS } from '@/constants/common'
 import { supabaseAdmin } from '@/lib/supabase'
 import { Member, Booking, ScheduleMenu, ScheduleTime, ScheduleOverride, Event, Manager, BookingCache } from '@/types'
 // ... (some code)
@@ -118,7 +119,8 @@ export async function getBookings(managerUid: string, filter: BookingFilter = {}
     const to = from + pageSize - 1
 
     const { data, error, count } = await query
-      .order('booking_start_time', { ascending: false })
+      .order('status', { ascending: true })
+      .order('booking_start_time', { ascending: true })
       .range(from, to)
 
     if (error) throw error

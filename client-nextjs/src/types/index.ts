@@ -31,15 +31,17 @@ export interface MemberListProps {
 
 export type Booking = {
   uid: string
-  member_uid: string
+  line_uid: string
+  is_reminded_3: boolean
+  is_reminded_1: boolean
   name: string
   phone: string
+  email: string
   service_item: string
   booking_start_time: string
   booking_end_time: string
   is_deposit_received: boolean
   status: number
-  notes?: string
   create_at: string
   update_at: string
 }

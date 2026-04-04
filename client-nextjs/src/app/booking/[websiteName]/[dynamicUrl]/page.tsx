@@ -15,7 +15,7 @@ type Props = {
 
 export default async function BookingPage({ params, searchParams }: Props) {
   const { websiteName, dynamicUrl } = await params
-  const { schedule_menu_uid, line_uid, limit } = await searchParams
+  let { schedule_menu_uid, line_uid, limit } = await searchParams
 
   if (CONFIG_ENV.nodeEnv != 'development' && !line_uid && limit != 'false') {
     return <LiffInitializer />

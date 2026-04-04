@@ -176,7 +176,7 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allOptio
               readOnly={selectedProc?.key}
               onChange={(e) => onUpdate(index, { key: e.target.value })}
               placeholder="關鍵字"
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-base text-white focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all font-black placeholder:text-slate-700 w-40 shadow-inner"
+              className="text-[12px] bg-white/5 border border-white/10 rounded-xl px-2 py-2 text-base text-white focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all font-black placeholder:text-slate-700 w-80 shadow-inner"
             />
           </div>
         </div>
@@ -274,12 +274,12 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allOptio
           className="w-full bg-white/[0.02] border border-white/[0.07] rounded-xl py-3 px-4 text-xm text-slate-300 focus:outline-none focus:border-emerald-500/30 transition-all resize-y font-medium"
         />
 
-          <MultiSelect
-            label="需要其他服務嗎？"
-            options={allOptions}
-            selected={entry.more_keys || []}
-            onChange={(v) => onUpdate(index, { more_keys: v })}
-          />
+        <MultiSelect
+          label="需要其他服務嗎？"
+          options={allOptions}
+          selected={entry.more_keys || []}
+          onChange={(v) => onUpdate(index, { more_keys: v })}
+        />
       </>
 
       )}

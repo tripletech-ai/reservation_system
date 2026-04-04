@@ -13,8 +13,10 @@ export const CACHE_TIME = 1000; // 1 小時
 
 export const BOOKING_STATUS = {
     CANCELLED: 0,
-    BOOKING: 1,
-    BOOKING_SUCCESS: 2,
+    APPLY_CANCELED: 3,
+    REVIEW: 10,
+    BOOKING_SUCCESS: 13,
+
 }
 
 
