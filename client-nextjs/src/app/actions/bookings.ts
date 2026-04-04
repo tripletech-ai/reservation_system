@@ -18,7 +18,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
       uid,
       create_at: now,
       update_at: now,
-      status: BOOKING_STATUS.BOOKING,
+      status: BOOKING_STATUS.REVIEW,
       is_deposit_received: false
     }
     console.log("data", data)
@@ -59,7 +59,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
       }).eq('uid', result.booking_uid)
     }
 
-    if (result.line_uid && result.line_channel_access_token) {
+    if (result.line_uid) {
       await supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
         body: {
           name: payload.name,
@@ -86,10 +86,10 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
 }
 
 
-export async function cancelBooking(bookingUid: string, session: Manager, timeSlotInterval: number, deleteType: number) {
+export async function cancelBooking(booking: Booking, session: Manager, timeSlotInterval: number, deleteType: number) {
   try {
     const { data: result, error } = await supabaseAdmin.rpc('cancel_booking', {
-      _booking_uid: bookingUid,
+      _booking_uid: booking.uid,
       _time_slot_interval: timeSlotInterval,
       _manager_uid: session.uid,
       _delete_type: deleteType
@@ -104,6 +104,21 @@ export async function cancelBooking(bookingUid: string, session: Manager, timeSl
         action: 'DELETE',
         googleCalendarId: result.data.google_calendar_id,
         eventId: result.data.google_calendar_event_id
+      })
+    }
+
+    if (booking.line_uid) {
+      await supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
+        body: {
+          name: booking.name,
+          service_item: booking.service_item,
+          booking_start_time: booking.booking_start_time,
+          booking_end_time: booking.booking_end_time,
+          line_uid: booking.line_uid || result.line_uid,
+          manager_uid: session.uid,
+          action: 'CANCEL',
+          displayTime: `${booking.booking_start_time} - ${booking.booking_end_time.slice(-5)}`
+        },
       })
     }
 
@@ -147,17 +162,34 @@ export async function updateBookingStatus(booking: Booking, session: Manager, st
       return { success: false, message: result.error || error }
     }
 
+
+
     if (result.data?.google_calendar_event_id && result.data.google_calendar_id) {
       GoogleCalendarService.sync({
         action: 'UPDATE',
         googleCalendarId: result.data.google_calendar_id,
         eventId: result.data.google_calendar_event_id,
         data: {
-          color_id: status == BOOKING_STATUS.BOOKING ? GOOGLE_CALENDAR_COLOR_ID.GRAY.toString() : GOOGLE_CALENDAR_COLOR_ID.PURPLE.toString()
+          color_id: status == BOOKING_STATUS.REVIEW ? GOOGLE_CALENDAR_COLOR_ID.GRAY.toString() : GOOGLE_CALENDAR_COLOR_ID.PURPLE.toString()
         }
       }).catch(err => {
         console.error("背景同步日曆失敗:", err);
       });
+    }
+    console.log("booking.line_uid", booking.line_uid)
+    if (booking.line_uid && result.data?.new_status == BOOKING_STATUS.BOOKING_SUCCESS) {
+      await supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
+        body: {
+          name: booking.name,
+          service_item: booking.service_item,
+          booking_start_time: booking.booking_start_time,
+          booking_end_time: booking.booking_end_time,
+          line_uid: booking.line_uid || result.line_uid,
+          manager_uid: session.uid,
+          action: 'BOOKING_SUCCESS',
+          displayTime: `${booking.booking_start_time} - ${booking.booking_end_time.slice(-5)}`
+        },
+      })
     }
 
     revalidatePath(ROUTES.ADMIN.BOOKINGS)

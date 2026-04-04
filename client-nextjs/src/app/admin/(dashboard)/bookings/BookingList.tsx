@@ -74,7 +74,7 @@ export default function BookingList({
 
     setIsCancelling(true)
     // -- 0: 備份並刪除
-    const res = await cancelBooking(selectedBooking.uid, session, TIME_SLOT_INTERVAL, deleteType)
+    const res = await cancelBooking(selectedBooking, session, TIME_SLOT_INTERVAL, deleteType)
     if (res.success) {
       setSelectedBooking(null)
       router.refresh()
@@ -113,8 +113,8 @@ export default function BookingList({
   }
 
   const handleToggleBookingStatus = async (booking: Booking) => {
-    const isBooking = booking.status === BOOKING_STATUS.BOOKING
-    const newStatus = isBooking ? BOOKING_STATUS.BOOKING_SUCCESS : BOOKING_STATUS.BOOKING
+    const isBooking = booking.status === BOOKING_STATUS.REVIEW
+    const newStatus = isBooking ? BOOKING_STATUS.BOOKING_SUCCESS : BOOKING_STATUS.REVIEW
     const statusText = isBooking ? '預約成功' : '審核中'
 
     const isConfirmed = await showConfirm({
@@ -204,7 +204,7 @@ export default function BookingList({
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    {booking.status !== BOOKING_STATUS.CANCELLED && (
+                    {(booking.status == BOOKING_STATUS.REVIEW || booking.status == BOOKING_STATUS.BOOKING_SUCCESS) && (
                       <div className="flex items-center gap-2">
                         <Switch
                           checked={booking.status === BOOKING_STATUS.BOOKING_SUCCESS}
@@ -218,6 +218,11 @@ export default function BookingList({
                     {booking.status === BOOKING_STATUS.CANCELLED && (
                       <span className="inline-flex px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-widest bg-rose-500/20 text-rose-400 border border-rose-500/30 w-fit">
                         已取消
+                      </span>
+                    )}
+                    {booking.status === BOOKING_STATUS.APPLY_CANCELED && (
+                      <span className="inline-flex px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-widest bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 w-fit">
+                        申請取消中
                       </span>
                     )}
 
@@ -346,14 +351,14 @@ export default function BookingList({
                 </div>
               </div>
 
-              {selectedBooking.notes && (
+              {/* {selectedBooking.notes && (
                 <div className="space-y-2 pt-2">
                   <p className="text-[14px] text-slate-400 uppercase font-black tracking-widest">備註事項</p>
                   <div className="p-4 bg-white/5 border border-white/10 rounded-3xl text-slate-200 text-xm leading-relaxed whitespace-pre-wrap font-bold">
                     {selectedBooking.notes}
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div className="p-8 pt-0 flex gap-3">
