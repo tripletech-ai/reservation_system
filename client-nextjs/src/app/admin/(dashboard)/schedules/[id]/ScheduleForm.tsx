@@ -282,7 +282,7 @@ export default function ScheduleForm({ id, managerUid, initialData }: ScheduleFo
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
-            onClick={() => router.push('/schedules')}
+            onClick={() => router.push(ROUTES.ADMIN.SCHEDULES)}
             className="flex-1 sm:flex-none px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all font-bold text-xm active:scale-95"
           >
             取消
