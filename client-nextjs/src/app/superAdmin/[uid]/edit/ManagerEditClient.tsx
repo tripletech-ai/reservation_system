@@ -280,6 +280,16 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allOptio
           selected={entry.more_keys || []}
           onChange={(v) => onUpdate(index, { more_keys: v })}
         />
+
+        <div className="space-y-1.5">
+          <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest ml-1">上傳 URL 網址</label>
+          <input
+            value={entry.upload_url || ''}
+            onChange={(e) => onUpdate(index, { upload_url: e.target.value })}
+            placeholder="https://..."
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[13px] font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all shadow-inner"
+          />
+        </div>
       </>
 
       )}
@@ -509,7 +519,7 @@ function jsonToEntries(raw: unknown): NotifyEntry[] {
       const no_data_keys = (e.no_data_keys || [])
         .map((k: string) => entries.find((target: any) => target.key === k)?.instanceId)
         .filter(Boolean);
-      return { ...e, more_keys, no_data_keys };
+      return { ...e, more_keys, no_data_keys, upload_url: e.upload_url || '' };
     });
   } catch {
     return [];

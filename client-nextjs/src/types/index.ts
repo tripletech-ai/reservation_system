@@ -199,7 +199,8 @@ export type NotifyEntry = {
   procedure_name: string,
   columns_json: string,
   more_keys?: string[],
-  no_data_keys?: string[]
+  no_data_keys?: string[],
+  upload_url?: string
 }
 
 export interface ScheduleSlotProps {

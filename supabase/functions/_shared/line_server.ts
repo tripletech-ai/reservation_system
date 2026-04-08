@@ -4,29 +4,12 @@ import { formatDateTime } from "./tool.ts";
  */ export const LineService = {
   /**
      * 回覆訊息 (Reply Message)
-     */ reply: async function(supabase, replyData) {
+     */ reply: async function (supabase, replyData) {
     const { accessToken, replyToken, responseText, searchData, procedureData } = replyData;
     if (!accessToken || !replyToken) return;
     console.log("replyData", replyData);
-    const messages = [];
-    // 1. 基本文字訊息
-    if (searchData.has_text) {
-      let text = responseText;
-      if (!responseText || responseText === '[]' || responseText === '{}') {
-        text = "查無資料";
-      }
-      messages.push({
-        type: "text",
-        text: text
-      });
-    }
-    // 2. 判斷是否需要 Flex Message (基於 searchData 和資料庫)
-    if (searchData && supabase) {
-      const flexMsg = await getFlexMessage(supabase, searchData, procedureData);
-      if (flexMsg) {
-        messages.push(flexMsg);
-      }
-    }
+
+    const messages = await getAllMessage(supabase, searchData, procedureData, responseText);
     const payload = {
       replyToken: replyToken,
       messages: messages
@@ -43,24 +26,11 @@ import { formatDateTime } from "./tool.ts";
   },
   /**
      * 主動推播訊息 (Push Message)
-     */ push: async function(supabase, replyData) {
+     */ push: async function (supabase, replyData) {
     const { accessToken, lineUid, responseText, searchData } = replyData;
     if (!accessToken || !lineUid) return;
-    const messages = [];
-    // 1. 基本文字訊息
-    if (responseText) {
-      messages.push({
-        type: "text",
-        text: responseText
-      });
-    }
-    // 2. 判斷是否需要 Flex Message (基於 searchData 和資料庫)
-    if (searchData && supabase) {
-      const flexMsg = await getFlexMessage(supabase, searchData, null);
-      if (flexMsg) {
-        messages.push(flexMsg);
-      }
-    }
+
+    const messages = await getAllMessage(supabase, searchData, null, responseText);
     const payload = {
       to: lineUid,
       messages: messages
@@ -76,17 +46,54 @@ import { formatDateTime } from "./tool.ts";
     return response;
   }
 };
+
+
+const getAllMessage = async (supabase, searchData, procedureData, responseText) => {
+  const messages = [];
+  // 1. 基本文字訊息
+  if (searchData.has_text) {
+    let text = responseText;
+    if (!responseText || responseText === '[]' || responseText === '{}') {
+      text = "查無資料";
+    }
+    messages.push({
+      type: "text",
+      text: text
+    });
+  }
+  // 2. 判斷是否需要 Flex Message (基於 searchData 和資料庫)
+  if (searchData && supabase) {
+    const flexMsg = await getFlexMessage(supabase, searchData, procedureData);
+    if (flexMsg) {
+      messages.push(flexMsg);
+    }
+  }
+
+  if (searchData.upload_url) {
+    messages.push({
+      type: "image",
+      originalContentUrl: searchData.upload_url,
+      previewImageUrl: searchData.upload_url
+    });
+  }
+
+  return messages;
+}
+
+
+
 /**
  * 主控：根據 searchData 的配置，決定回傳哪種 Flex Message
- */ const getFlexMessage = async (supabase, searchData, procedureData)=>{
-  // 取得所有程序配置以便查找按鈕 Label
+ */
+const getFlexMessage = async (supabase, searchData, procedureData) => {
+
   const allProcedures = await getLineNotifyProcedureData(supabase);
   if (!allProcedures) return null;
   // 找到當前執行程序的完整配置 (包含 flex_message_type)
-  const currentConfig = allProcedures.find((p)=>p.procedure_name === searchData.procedure_name);
+  const currentConfig = allProcedures.find((p) => p.procedure_name === searchData.procedure_name);
   const flexType = currentConfig?.flex_message_type;
   let flex = null;
-  switch(flexType){
+  switch (flexType) {
     case 2:
       flex = createBookingHistoryFlex(searchData, procedureData);
       break;
@@ -102,7 +109,9 @@ import { formatDateTime } from "./tool.ts";
   }
   return flex;
 };
-const getLineNotifyProcedureData = async (supabase)=>{
+
+
+const getLineNotifyProcedureData = async (supabase) => {
   const { data: managerData, error } = await supabase.from("line_notify_procedure").select("*");
   if (error) {
     console.error("查詢 Manager 失敗:", error);
@@ -111,7 +120,7 @@ const getLineNotifyProcedureData = async (supabase)=>{
   return managerData;
 };
 //預約歷史紀錄 flex_message_type = 2
-const createBookingHistoryFlex = (searchData, procedureData)=>{
+const createBookingHistoryFlex = (searchData, procedureData) => {
   const bookings = procedureData || [];
   if (bookings.length === 0) {
     const buttons = createButtons_(searchData.no_data_keys);
@@ -153,7 +162,7 @@ const createBookingHistoryFlex = (searchData, procedureData)=>{
     }
     return flex;
   }
-  const bubbles = bookings.map((b)=>{
+  const bubbles = bookings.map((b) => {
     const showTime = formatDateTime(b.booking_date);
     const statusText = statusMap[String(b.status)] || {
       text: '',
@@ -282,7 +291,7 @@ function createBookingFlex_(searchData, procedureData) {
   }
   let bubbles = [];
   if (bookings) {
-    bubbles = bookings.map((b)=>{
+    bubbles = bookings.map((b) => {
       const canCancel = b.status != status.apply_canceled;
       const showTime = formatDateTime(b.booking_start_time);
       const flex = {
@@ -432,7 +441,7 @@ function createQuickActionsFlex_(more_keys = []) {
  * 通用工具：將關鍵字列轉為 LINE 按鈕物件
  */ function createButtons_(keys, isPrimary = true) {
   if (!keys || keys.length === 0) return [];
-  return keys.map((key)=>{
+  return keys.map((key) => {
     // 先定義基礎結構
     const button = {
       "type": "button",
