@@ -142,6 +142,7 @@ export type BookingClientProps = {
   schedule: ScheduleData
   booking_cache: BookingCache[]
   line_uid: string | null
+  limit: boolean
 }
 
 

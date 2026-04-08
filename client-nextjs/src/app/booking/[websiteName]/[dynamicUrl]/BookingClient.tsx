@@ -47,9 +47,14 @@ const minutesToTime = (m: number) => {
   return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
 }
 
-const SimpleCalendar: React.FC<{ selected: Date | null, onSelect: (d: Date) => void }> = ({ selected, onSelect }) => {
+const SimpleCalendar: React.FC<{ selected: Date | null, onSelect: (d: Date) => void, limit: boolean }> = ({ selected, onSelect, limit }) => {
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  if (limit) {
+    today.setHours(48, 0, 0, 0)
+  } else {
+    today.setHours(0, 0, 0, 0)
+  }
+
 
   const [viewDate, setViewDate] = useState(new Date(selected || today))
 
@@ -109,7 +114,7 @@ const SimpleCalendar: React.FC<{ selected: Date | null, onSelect: (d: Date) => v
 export default function BookingClient(props: BookingClientProps) {
   const router = useRouter()
   const { showAlert } = useAlert()
-  const { is_member, manager, event, schedule, booking_cache, line_uid } = props
+  const { is_member, manager, event, schedule, booking_cache, line_uid, limit } = props
 
   // -- State --
   const [step, setStep] = useState(1)
@@ -284,6 +289,7 @@ export default function BookingClient(props: BookingClientProps) {
       if (rawSlots[i].start_minutes >= currentLastBooking) {
         isValid = false;
       }
+
 
       if (isValid) {
         validSlots.push(rawSlots[i]);
@@ -524,7 +530,7 @@ export default function BookingClient(props: BookingClientProps) {
                   <h2 className="text-[14px] font-black text-slate-900 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
                     <CalendarIcon size={14} className="text-purple-600" /> 選擇日期
                   </h2>
-                  <SimpleCalendar selected={selectedDate} onSelect={setSelectedDate} />
+                  <SimpleCalendar selected={selectedDate} onSelect={setSelectedDate} limit={limit} />
                 </section>
 
                 {/* Times */}

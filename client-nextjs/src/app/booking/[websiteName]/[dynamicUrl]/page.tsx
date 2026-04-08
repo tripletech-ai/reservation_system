@@ -43,7 +43,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
     event: data.event,
     schedule: data.schedule,
     booking_cache: data.booking_cache,
-    line_uid: line_uid || ''
+    line_uid: line_uid || '',
+    limit: limit != "false"
   }
 
   return <BookingClient {...info} />
