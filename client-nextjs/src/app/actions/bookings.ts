@@ -21,7 +21,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
       status: BOOKING_STATUS.REVIEW,
       is_deposit_received: false
     }
-    console.log("data", data)
+
     const { data: result, error } = await supabaseAdmin
       .rpc('submit_booking', {
         p_booking_data: data,
@@ -29,7 +29,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
         p_time_slot_interval: timeSlotInterval
       })
 
-    console.log("result", result)
+
     if (error) throw error
 
     if (!result.booking_success) {
@@ -39,28 +39,38 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
 
     if (result.google_calendar_id) {
 
-      const google_calendar_event_id = await GoogleCalendarService.sync({
-        action: 'CREATE',
-        googleCalendarId: result.google_calendar_id,
-        data: {
-          name: payload.name,
-          phone: payload.phone || '',
-          email: payload.email || '',
-          service_item: payload.service_item,
-          booking_start_time: payload.booking_start_time,
-          booking_end_time: payload.booking_end_time,
-          line_uid: payload.line_uid || result.line_uid,
-          color_id: GOOGLE_CALENDAR_COLOR_ID.GRAY.toString()
-        }
-      })
+      (async () => {
+        try {
+          // 內部的 await 會確保這兩步是「自己等待自己」按順序執行的
+          const google_calendar_event_id = await GoogleCalendarService.sync({
+            action: 'CREATE',
+            googleCalendarId: result.google_calendar_id,
+            data: {
+              name: payload.name,
+              phone: payload.phone || '',
+              email: payload.email || '',
+              service_item: payload.service_item,
+              booking_start_time: payload.booking_start_time,
+              booking_end_time: payload.booking_end_time,
+              line_uid: payload.line_uid || result.line_uid,
+              color_id: GOOGLE_CALENDAR_COLOR_ID.GRAY.toString()
+            }
+          });
 
-      await supabaseAdmin.from('booking').update({
-        google_calendar_event_id: google_calendar_event_id
-      }).eq('uid', result.booking_uid)
+          await supabaseAdmin.from('booking').update({
+            google_calendar_event_id: google_calendar_event_id
+          }).eq('uid', result.booking_uid);
+
+          console.log('背景同步完成');
+        } catch (error) {
+          // 因為主流程不等待，這裡的錯誤必須在內部捕捉，否則會導致 UnhandledPromiseRejection
+          console.error('背景同步失敗:', error);
+        }
+      });
     }
 
     if (result.line_uid) {
-      await supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
+      supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
         body: {
           name: payload.name,
           phone: payload.phone || '',
@@ -108,7 +118,7 @@ export async function cancelBooking(booking: Booking, session: Manager, timeSlot
     }
 
     if (booking.line_uid) {
-      await supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
+      supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
         body: {
           name: booking.name,
           service_item: booking.service_item,
@@ -178,7 +188,7 @@ export async function updateBookingStatus(booking: Booking, session: Manager, st
     }
     console.log("booking.line_uid", booking.line_uid)
     if (booking.line_uid && result.data?.new_status == BOOKING_STATUS.BOOKING_SUCCESS) {
-      await supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
+      supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
         body: {
           name: booking.name,
           service_item: booking.service_item,
