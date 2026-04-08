@@ -77,8 +77,8 @@ const SimpleCalendar: React.FC<{ selected: Date | null, onSelect: (d: Date) => v
       <div className="flex justify-between items-center mb-4">
         <span className="font-extrabold text-slate-800">{viewDate.getFullYear()}年 {viewDate.getMonth() + 1}月</span>
         <div className="flex gap-2">
-          <button onClick={prevMonth} className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"><ChevronLeft size={16} /></button>
-          <button onClick={nextMonth} className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"><ChevronRight size={16} /></button>
+          <button onClick={prevMonth} className="text-black p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"><ChevronLeft size={16} /></button>
+          <button onClick={nextMonth} className="text-black p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"><ChevronRight size={16} /></button>
         </div>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
@@ -421,7 +421,7 @@ export default function BookingClient(props: BookingClientProps) {
                             value={formData.name}
                             onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
                             placeholder="您的姓名"
-                            className={`w-full bg-slate-50 border-2 rounded-2xl pl-12 pr-4 py-3.5 text-sm outline-none transition-all ${isFirstStepAttempted && !formData.name ? 'border-rose-200 bg-rose-50' : 'border-transparent focus:border-purple-600/20 focus:bg-white'}`}
+                            className={`text-black w-full bg-slate-50 border-2 rounded-2xl pl-12 pr-4 py-3.5 text-sm outline-none transition-all ${isFirstStepAttempted && !formData.name ? 'border-rose-200 bg-rose-50' : 'border-transparent focus:border-purple-600/20 focus:bg-white'}`}
                           />
                         </div>
                       </div>
@@ -437,7 +437,7 @@ export default function BookingClient(props: BookingClientProps) {
                               value={formData.phone}
                               onChange={(e) => setFormData(p => ({ ...p, phone: e.target.value }))}
                               placeholder="09XXXXXXXX"
-                              className={`w-full bg-slate-50 border-2 rounded-2xl pl-12 pr-4 py-3.5 text-sm outline-none transition-all ${(isFirstStepAttempted && !formData.phone) || (formData.phone && !isPhoneValid) ? 'border-rose-200 bg-rose-50' : 'border-transparent focus:border-purple-600/20 focus:bg-white'}`}
+                              className={`text-black w-full bg-slate-50 border-2 rounded-2xl pl-12 pr-4 py-3.5 text-sm outline-none transition-all ${(isFirstStepAttempted && !formData.phone) || (formData.phone && !isPhoneValid) ? 'border-rose-200 bg-rose-50' : 'border-transparent focus:border-purple-600/20 focus:bg-white'}`}
                             />
                           </div>
                           {formData.phone && !isPhoneValid && <p className="text-[14px] text-rose-500 font-bold ml-1">格式不正確</p>}
@@ -455,7 +455,7 @@ export default function BookingClient(props: BookingClientProps) {
                               value={formData.email}
                               onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
                               placeholder="example@email.com"
-                              className={`w-full bg-slate-50 border-2 rounded-2xl pl-12 pr-4 py-3.5 text-xm outline-none transition-all ${(isFirstStepAttempted && !formData.email) || (formData.email && !isEmailValid) ? 'border-rose-200 bg-rose-50' : 'border-transparent focus:border-purple-600/20 focus:bg-white'}`}
+                              className={`text-black w-full bg-slate-50 border-2 rounded-2xl pl-12 pr-4 py-3.5 text-xm outline-none transition-all ${(isFirstStepAttempted && !formData.email) || (formData.email && !isEmailValid) ? 'border-rose-200 bg-rose-50' : 'border-transparent focus:border-purple-600/20 focus:bg-white'}`}
                             />
                           </div>
                           {formData.email && !isEmailValid && <p className="text-[14px] text-rose-500 font-bold ml-1">格式不正確</p>}
@@ -468,7 +468,7 @@ export default function BookingClient(props: BookingClientProps) {
                         <div className="relative">
                           <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className={`w-full bg-slate-50 border-2 rounded-2xl px-5 py-3.5 text-sm flex justify-between items-center transition-all ${isFirstStepAttempted && !formData.selectedService ? 'border-rose-200 bg-rose-50' : (isDropdownOpen ? 'border-purple-600/20 bg-white ring-4 ring-purple-600/5' : 'border-transparent')}`}
+                            className={`text-black w-full bg-slate-50 border-2 rounded-2xl px-5 py-3.5 text-sm flex justify-between items-center transition-all ${isFirstStepAttempted && !formData.selectedService ? 'border-rose-200 bg-rose-50' : (isDropdownOpen ? 'border-purple-600/20 bg-white ring-4 ring-purple-600/5' : 'border-transparent')}`}
                           >
                             <div className="flex items-center gap-2">
                               {formData.selectedService ? (
@@ -492,8 +492,8 @@ export default function BookingClient(props: BookingClientProps) {
                                   className={`p-2 rounded-xl cursor-pointer flex justify-between items-center transition-colors ${formData.selectedService === item ? 'bg-purple-50 text-purple-600' : 'hover:bg-slate-50'}`}
                                 >
                                   <div>
-                                    <div className="font-bold text-sm">{item.title}</div>
-                                    <div className="text-sm opacity-60">{item.duration} 分鐘</div>
+                                    <div className="text-black font-bold text-sm">{item.title}</div>
+                                    <div className="text-gray-800 text-sm opacity-60">{item.duration} 分鐘</div>
                                   </div>
                                   {formData.selectedService === item && <Check size={14} />}
                                 </div>
@@ -591,7 +591,7 @@ export default function BookingClient(props: BookingClientProps) {
                   <CheckCircle2 size={48} strokeWidth={2.5} />
                 </div>
                 <h2 className="text-3xl font-black text-slate-800 mb-2">預約成功！</h2>
-                <p className="text-slate-300 text-xm mb-10 leading-relaxed font-bold">
+                <p className="text-slate-500 text-xm mb-10 leading-relaxed font-bold">
                   感謝您的預約，系統已收到您的申請。
                 </p>
 
