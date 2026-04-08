@@ -34,5 +34,10 @@
     "eslint-config-next": "16.2.0",
     "tailwindcss": "^4.2.2",
     "typescript": "^5"
+  },
+  "overrides": {
+    "cookie": "^0.7.0",
+    "undici": "^6.23.1",
+    "esbuild": "^0.25.0"
   }
 }
