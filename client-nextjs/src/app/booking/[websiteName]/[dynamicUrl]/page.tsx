@@ -5,7 +5,7 @@ import { BookingClientProps } from '@/types';
 import { ROUTES } from '@/constants/routes';
 import { CONFIG_ENV } from '@/lib/env';
 import BookingClient from './BookingClient';
-
+import { Analytics } from "@vercel/analytics/next"
 
 
 type Props = {
@@ -47,5 +47,5 @@ export default async function BookingPage({ params, searchParams }: Props) {
     limit: limit != "false"
   }
 
-  return <BookingClient {...info} />
+  return <><BookingClient {...info} /><Analytics /></>
 }

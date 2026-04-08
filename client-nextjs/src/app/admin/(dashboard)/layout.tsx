@@ -4,7 +4,7 @@ import DashboardNav from './DashboardNav'
 import { ROUTES } from '@/constants/routes'
 import { MANAGER_LEVEL } from '@/constants/common'
 import { getSession } from '@/app/actions/superAuth'
-
+import { Analytics } from "@vercel/analytics/next"
 
 
 
@@ -32,6 +32,7 @@ export default async function DashboardLayout({
           </div>
         </div>
       </main>
+      <Analytics />
     </div>
   )
 }

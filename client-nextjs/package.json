@@ -13,6 +13,7 @@
     "@line/liff": "^2.28.0",
     "@next/bundle-analyzer": "^16.2.2",
     "@supabase/supabase-js": "^2.99.3",
+    "@vercel/analytics": "^2.0.1",
     "bcrypt-ts": "^8.0.1",
     "dayjs": "^1.11.20",
     "lucide-react": "^0.577.0",
