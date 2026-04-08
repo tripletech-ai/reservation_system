@@ -58,7 +58,7 @@ export async function deleteManager(uid: string) {
     console.error('deleteManager error:', error)
     return { success: false, message: error.message }
   }
-  revalidatePath('/superAdmin')
+  revalidatePath(ROUTES.SUPER_ADMIN.HOME)
   return { success: true }
 }
 

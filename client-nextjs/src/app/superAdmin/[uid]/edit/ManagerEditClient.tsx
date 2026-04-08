@@ -607,7 +607,7 @@ export default function ManagerEditPage() {
 
       const res = await upsertManager(payload)
       if (res.success) {
-        router.push('/superAdmin')
+        router.push(ROUTES.SUPER_ADMIN.HOME)
       } else {
         showAlert({ message: res.message || '儲存失敗', type: 'error' })
       }
@@ -638,7 +638,7 @@ export default function ManagerEditPage() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => router.push('/superAdmin')}
+              onClick={() => router.push(ROUTES.SUPER_ADMIN.HOME)}
               className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"
             >
               <ArrowLeft size={20} />
@@ -658,7 +658,7 @@ export default function ManagerEditPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => router.push('/superAdmin')}
+              onClick={() => router.push(ROUTES.SUPER_ADMIN.HOME)}
               className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-ms font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-slate-400"
             >
               取消

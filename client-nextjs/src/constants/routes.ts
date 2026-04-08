@@ -24,6 +24,8 @@ export const ROUTES = {
   SUPER_ADMIN: {
     HOME: '/superAdmin',
     LOGIN: '/superAdmin/login',
+    MANAGER_EDIT: (id: string) => `/superAdmin/${id}/edit`,
+    MANAGER_NEW: '/superAdmin/new/edit',
   },
 
   REGISTER: (query: string) => `/register?${query}`,

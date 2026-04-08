@@ -74,7 +74,7 @@ export default function SuperAdminClient({ initialManagers }: SuperAdminClientPr
             登出
           </button>
           <button
-            onClick={() => router.push('/superAdmin/new/edit')}
+            onClick={() => router.push(`${ROUTES.SUPER_ADMIN.MANAGER_NEW}`)}
             className="flex-1 md:flex-none px-8 py-3 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-2xl font-black text-[14px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:shadow-[0_15px_40px_-5px_rgba(147,51,234,0.6)] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-purple-500/30 border border-white/10"
           >
             <UserPlus size={16} /> 建立管理員
@@ -117,7 +117,7 @@ export default function SuperAdminClient({ initialManagers }: SuperAdminClientPr
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => router.push(`/superAdmin/${manager.uid}/edit`)} className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600/40 hover:text-white hover:border-purple-500 transition-all text-slate-400 active:scale-90">
+                  <button onClick={() => router.push(`${ROUTES.SUPER_ADMIN.MANAGER_EDIT(manager.uid)}`)} className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600/40 hover:text-white hover:border-purple-500 transition-all text-slate-400 active:scale-90">
                     <Edit3 size={18} />
                   </button>
                   {manager.level == 0 && (
