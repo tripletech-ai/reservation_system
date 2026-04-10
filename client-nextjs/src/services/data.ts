@@ -94,6 +94,8 @@ export interface BookingFilter {
   searchTerm?: string
   page?: number
   pageSize?: number
+  startDate?: string
+  endDate?: string
 }
 
 export async function getBookings(managerUid: string, filter: BookingFilter = {}): Promise<{
@@ -113,6 +115,14 @@ export async function getBookings(managerUid: string, filter: BookingFilter = {}
     if (searchTerm) {
       // 搜尋會員姓名、電話或服務名稱
       query = query.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,service_item.ilike.%${searchTerm}%`)
+    }
+
+    if (filter.startDate) {
+      query = query.gte('booking_start_time', filter.startDate)
+    }
+
+    if (filter.endDate) {
+      query = query.lte('booking_start_time', filter.endDate)
     }
 
     const from = (page - 1) * pageSize

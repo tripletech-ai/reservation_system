@@ -3,13 +3,17 @@ import { Calendar, Clock, DollarSign } from 'lucide-react'
 import { BOOKING_STATUS, MANAGER_LEVEL } from '@/constants/common'
 import { getSession } from '@/app/actions/superAuth'
 import BookingList from './BookingList'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 
-
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 export default async function BookingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; pageSize?: string }>
+  searchParams: Promise<{ q?: string; page?: string; pageSize?: string; future?: string }>
 }) {
   const session = await getSession(MANAGER_LEVEL.ADMIN)
   if (!session) return null
@@ -18,11 +22,22 @@ export default async function BookingsPage({
   const q = params.q || ''
   const page = parseInt(params.page || '1')
   const pageSize = parseInt(params.pageSize || '10')
+  const futureOnly = params.future === 'true'
+
+  let startDate: string | undefined = undefined
+  let endDate: string | undefined = undefined
+
+  if (futureOnly) {
+    startDate = dayjs().startOf('day').toISOString()
+    endDate = dayjs().add(7, 'day').endOf('day').toISOString()
+  }
 
   const { bookings, totalCount } = await getBookings(session.uid, {
     searchTerm: q,
     page,
-    pageSize
+    pageSize,
+    startDate,
+    endDate
   })
 
   const todayCount = bookings.filter(b => new Date(b.booking_start_time).toDateString() === new Date().toDateString()).length

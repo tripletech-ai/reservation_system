@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
         }
 
         //4. line 官方管理員回復
-        if (searchData && searchData.line_oa_reply) {
+        if (searchData && searchData.line_oa_reply && managerData.line_official_account) {
           let responseAdminText = searchData.line_oa_reply;
           searchData.procedure_name = "line_get_member";
           const data = await executeProcedure(searchData, supabase, {
@@ -120,17 +120,22 @@ Deno.serve(async (req) => {
               formattedTime: formattedTime
             })
           }
+          console.log("managerData", managerData)
+          const accounts = managerData.line_official_account.split(',');
 
-          const replyData = {
-            accessToken: managerData.line_channel_access_token,
-            lineUid: lineId,
-            responseText: responseAdminText,
-            searchData: searchData,
-            procedureData: data
-          };
-          console.log("replyDataAdmin", replyData)
-          const response = await LineService.push(supabase, replyData);
-          console.log(response);
+          // 方式 A：forEach 迴圈 (簡潔)
+          accounts.forEach((account) => {
+            const replyData = {
+              accessToken: managerData.line_channel_access_token,
+              lineUid: account,
+              responseText: responseAdminText,
+              searchData: searchData,
+              procedureData: data
+            };
+            console.log("replyDataAdmin", replyData)
+            LineService.push(supabase, replyData);
+            console.log(response);
+          });
         }
       }
     }
@@ -178,7 +183,7 @@ const getBookingData = async (uid) => {
 
 const getManagerData = async (uid) => {
   if (!uid) return null;
-  const { data: managerData, error } = await supabase.from("manager").select("line_notify_content, line_notify_default, line_channel_access_token") // <-- 務必加入這一項
+  const { data: managerData, error } = await supabase.from("manager").select("*") // <-- 務必加入這一項
     .eq("uid", uid).single();
   if (error) {
     console.error("查詢 Manager 失敗:", error);
