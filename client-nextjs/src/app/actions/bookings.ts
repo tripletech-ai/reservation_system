@@ -36,7 +36,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
       return { success: false, message: result.msg }
     }
 
-
+    console.log("result", payload)
     if (result.google_calendar_id) {
 
       (async () => {
@@ -80,6 +80,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
           booking_start_time: payload.booking_start_time,
           booking_end_time: payload.booking_end_time,
           line_uid: payload.line_uid || result.line_uid,
+          service_computed_duration: payload.service_computed_duration,
           manager_uid: payload.manager_uid,
           action: LINE_NOTIFY_ACTION.BOOKING,
           displayTime: `${payload.booking_start_time} - ${payload.booking_end_time.slice(-5)}`
