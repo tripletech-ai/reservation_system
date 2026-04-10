@@ -3,6 +3,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { revalidatePath } from 'next/cache'
 import { nanoid } from 'nanoid'
+import { ROUTES } from '@/constants/routes'
 
 export async function registerMember(payload: {
   manager_uid: string
@@ -43,7 +44,7 @@ export async function registerMember(payload: {
       throw error
     }
 
-    revalidatePath('/members')
+    // revalidatePath(ROUTES.ADMIN.MEMBERS)
     return { success: true, uid }
   } catch (err: any) {
     console.error('registerMember Error:', err)
@@ -77,7 +78,7 @@ export async function updateMember(payload: {
       throw error
     }
 
-    revalidatePath('/members')
+    revalidatePath(ROUTES.ADMIN.MEMBERS)
     return { success: true }
   } catch (err: any) {
     console.error('updateMember Error:', err)

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { EventListProps, Event } from '@/types'
 import { deleteEvent } from '@/app/actions/events'
@@ -13,6 +13,11 @@ export default function EventList({ events, menus, managerWebsiteName }: EventLi
   const [searchTerm, setSearchTerm] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [origin, setOrigin] = useState('')
+
+  useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
 
   const handleCopy = (url: string) => {
     navigator.clipboard.writeText(url).then(() => {
@@ -98,8 +103,8 @@ export default function EventList({ events, menus, managerWebsiteName }: EventLi
                       <div className="flex flex-wrap gap-2">
                         {selectedMenus.map(sm => {
                           const menuName = menus.find(m => m.uid === sm.uid)?.name || '時程'
-                          const url = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}`
-                          const url_no_limit = `${window.location.origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}&limit=false`
+                          const url = `${origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}`
+                          const url_no_limit = `${origin}/booking/${managerWebsiteName}/${event.booking_dynamic_url}?schedule_menu_uid=${sm.uid}&limit=false`
                           return (
                             <div key={sm.uid} className="flex items-center gap-1">
                               <button
