@@ -47,7 +47,8 @@ Deno.serve(async (req) => {
       accessToken: managerData.line_channel_access_token,
       lineUid: line_uid,
       responseText: responseText,
-      searchData: searchData
+      searchData: searchData,
+      payloadRequest: payload
     };
     console.log("replyData:", replyData);
     // 3. 發送回覆給 Line

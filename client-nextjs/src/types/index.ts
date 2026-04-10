@@ -12,12 +12,23 @@ export type Member = {
 
 export type Manager = {
   uid: string
-  name: string
   account: string
+  name: string
+  password?: string
   logo_url: string
   website_name: string
-  questionnaire: string
   google_calendar_id: string
+  bank_name?: string
+  bank_account?: string
+  bank_account_owner?: string
+  line_notify_content?: string
+  line_notify_default?: string
+  line_channel_access_token?: string
+  line_official_account?: string
+  level?: number
+  questionnaire: string | any[] // Should be JSONB, code currently handles both string and array
+  create_at?: string
+  update_at?: string
 }
 
 
@@ -166,6 +177,7 @@ export type GasPayload = {
     service_item?: string;
     booking_start_time?: string;
     booking_end_time?: string;
+    service_computed_duration?: number;
     line_uid?: string;
     color_id?: string;
   };
@@ -200,7 +212,8 @@ export type NotifyEntry = {
   columns_json: string,
   more_keys?: string[],
   no_data_keys?: string[],
-  upload_url?: string
+  upload_url?: string,
+  line_oa_reply?: string
 }
 
 export interface ScheduleSlotProps {

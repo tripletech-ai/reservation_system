@@ -19,6 +19,14 @@ export const BOOKING_STATUS = {
 
 }
 
+export const LINE_NOTIFY_ACTION = {
+    BOOKING: 'BOOKING',
+    CANCEL: 'CANCEL',
+    UPDATE: 'UPDATE',
+    BOOKING_SUCCESS: 'BOOKING_SUCCESS',
+    APPLY_CANCELED: 'APPLY_CANCELED',
+}
+
 
 export const MANAGER_LEVEL = {
     SUPER: 1,

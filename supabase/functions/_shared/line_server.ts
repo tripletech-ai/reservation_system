@@ -26,11 +26,26 @@ import { formatDateTime } from "./tool.ts";
   },
   /**
      * 主動推播訊息 (Push Message)
-     */ push: async function (supabase, replyData) {
-    const { accessToken, lineUid, responseText, searchData } = replyData;
+     */
+  push: async function (supabase, replyData) {
+    const { accessToken, lineUid, responseText, searchData, payloadRequest } = replyData;
     if (!accessToken || !lineUid) return;
+    console.log("payloadRequest", payloadRequest);
+    console.log("payloadReques222", (payloadRequest.flexType !== null && payloadRequest.flexType !== undefined));
+    let messages;
+    if (payloadRequest.flexType !== null && payloadRequest.flexType !== undefined) {
+      const flex = getFlexCancelBooking(payloadRequest)
+      console.log("flex", flex);
+      messages = [{
+        "type": "flex",
+        "altText": "您的預約已取消",
+        "contents": flex
+      }];
+      console.log("messages", messages);
+    } else {
+      messages = await getAllMessage(supabase, searchData, null, responseText);
+    }
 
-    const messages = await getAllMessage(supabase, searchData, null, responseText);
     const payload = {
       to: lineUid,
       messages: messages
@@ -46,6 +61,155 @@ import { formatDateTime } from "./tool.ts";
     return response;
   }
 };
+
+
+const getFlexCancelBooking = (data: any) => {
+  console.log("data", data);
+  const start_time = formatDateTime(data.booking_start_time);
+  const end_time = formatDateTime(data.booking_end_time);
+  console.log("start_time", start_time);
+  console.log("end_time", end_time);
+  const formattedTime = start_time + "-" + end_time.slice(-5);
+  console.log("formattedTime", formattedTime);
+  return {
+    "type": "bubble",
+    "header": {
+      "type": "box",
+      "layout": "horizontal",
+      "backgroundColor": "#E94E4E",
+      "contents": [
+        {
+          "type": "text",
+          "text": "🗑️ 預約已取消",
+          "size": "xl",
+          "color": "#FFFFFF",
+          "weight": "bold",
+          "align": "start"
+        }
+      ],
+      "paddingAll": "20px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "✅ 此行程已取消，自動刪除！",
+              "size": "md",
+              "weight": "bold",
+              "color": "#333333"
+            }
+          ],
+          "margin": "md"
+        },
+        {
+          "type": "separator",
+          "margin": "lg",
+          "color": "#EEEEEE"
+        },
+        {
+          "type": "box",
+          "layout": "vertical",
+          "margin": "lg",
+          "spacing": "sm",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "baseline",
+              "spacing": "lg",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "客戶",
+                  "color": "#AAAAAA",
+                  "size": "md",
+                  "flex": 2
+                },
+                {
+                  "type": "text",
+                  "text": data.name,
+                  "wrap": true,
+                  "color": "#666666",
+                  "size": "md",
+                  "flex": 5
+                }
+              ]
+            },
+            {
+              "type": "box",
+              "layout": "baseline",
+              "spacing": "lg",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "時間",
+                  "color": "#AAAAAA",
+                  "size": "md",
+                  "flex": 2
+                },
+                {
+                  "type": "text",
+                  "text": formattedTime,
+                  "wrap": true,
+                  "color": "#666666",
+                  "size": "md",
+                  "flex": 5
+                }
+              ]
+            },
+            {
+              "type": "box",
+              "layout": "baseline",
+              "spacing": "lg",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "服務",
+                  "color": "#AAAAAA",
+                  "size": "md",
+                  "flex": 2
+                },
+                {
+                  "type": "text",
+                  "text": data.service_item,
+                  "wrap": true,
+                  "color": "#666666",
+                  "size": "md",
+                  "flex": 5
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "paddingAll": "20px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "此為系統自動化通知",
+          "size": "xs",
+          "color": "#AAAAAA",
+          "align": "center"
+        }
+      ],
+      "paddingBottom": "15px"
+    },
+    "styles": {
+      "header": {
+        "backgroundColor": "#E94E4E"
+      }
+    }
+  }
+}
 
 
 const getAllMessage = async (supabase, searchData, procedureData, responseText) => {

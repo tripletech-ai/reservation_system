@@ -1,6 +1,6 @@
 'use server'
 
-import { BOOKING_STATUS } from '@/constants/common'
+import { BOOKING_STATUS, LINE_NOTIFY_ACTION } from '@/constants/common'
 import { ROUTES } from '@/constants/routes'
 import { GOOGLE_CALENDAR_COLOR_ID, GoogleCalendarService } from '@/lib/google_calendar'
 import { supabaseAdmin, SUPABASE_EDGE_FUNCTION } from '@/lib/supabase'
@@ -52,6 +52,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
               service_item: payload.service_item,
               booking_start_time: payload.booking_start_time,
               booking_end_time: payload.booking_end_time,
+              service_computed_duration: payload.service_computed_duration,
               line_uid: payload.line_uid || result.line_uid,
               color_id: GOOGLE_CALENDAR_COLOR_ID.GRAY.toString()
             }
@@ -80,7 +81,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
           booking_end_time: payload.booking_end_time,
           line_uid: payload.line_uid || result.line_uid,
           manager_uid: payload.manager_uid,
-          action: 'BOOKING',
+          action: LINE_NOTIFY_ACTION.BOOKING,
           displayTime: `${payload.booking_start_time} - ${payload.booking_end_time.slice(-5)}`
         },
       })
@@ -126,7 +127,8 @@ export async function cancelBooking(booking: Booking, session: Manager, timeSlot
           booking_end_time: booking.booking_end_time,
           line_uid: booking.line_uid || result.line_uid,
           manager_uid: session.uid,
-          action: 'CANCEL',
+          action: LINE_NOTIFY_ACTION.CANCEL,
+          flexType: BOOKING_STATUS.CANCELLED,
           displayTime: `${booking.booking_start_time} - ${booking.booking_end_time.slice(-5)}`
         },
       })
@@ -186,7 +188,6 @@ export async function updateBookingStatus(booking: Booking, session: Manager, st
         console.error("背景同步日曆失敗:", err);
       });
     }
-    console.log("booking.line_uid", booking.line_uid)
     if (booking.line_uid && result.data?.new_status == BOOKING_STATUS.BOOKING_SUCCESS) {
       supabaseAdmin.functions.invoke(SUPABASE_EDGE_FUNCTION.lineBotNotify, {
         body: {
@@ -196,7 +197,7 @@ export async function updateBookingStatus(booking: Booking, session: Manager, st
           booking_end_time: booking.booking_end_time,
           line_uid: booking.line_uid || result.line_uid,
           manager_uid: session.uid,
-          action: 'BOOKING_SUCCESS',
+          action: LINE_NOTIFY_ACTION.BOOKING_SUCCESS,
           displayTime: `${booking.booking_start_time} - ${booking.booking_end_time.slice(-5)}`
         },
       })

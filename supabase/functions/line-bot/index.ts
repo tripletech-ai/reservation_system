@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "../_shared/constant.ts";
 import { LineService } from "../_shared/line_server.ts";
 import { executeProcedure } from "./action.ts";
-import { processCommand } from "../_shared/tool.ts";
+import { processCommand, formatDateTime } from "../_shared/tool.ts";
 //npx supabase functions deploy line-bot --project-ref rqczzxaxyntjdyqifalj --no-verify-jwt
 // 初始化 Supabase Client
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -83,6 +83,55 @@ Deno.serve(async (req) => {
         if (response.ok && searchData) {
           updateDb(searchData.updateData);
         }
+
+        //4. line 官方管理員回復
+        if (searchData && searchData.line_oa_reply) {
+          let responseAdminText = searchData.line_oa_reply;
+          searchData.procedure_name = "line_get_member";
+          const data = await executeProcedure(searchData, supabase, {
+            lineId: lineId,
+            managerUid: managerUid
+          }) || [];
+          const bookingData = await getBookingData(searchData.updateData.uid);
+
+          if (hasContent(data)) {
+            responseAdminText = replaceResponseText(responseAdminText, data);
+          }
+
+          if (lineId && searchData.updateData.uid) {
+            responseAdminText = replaceResponseText(responseAdminText, {
+              line_uid: lineId,
+              booking_uid: searchData.updateData.uid,
+            });
+          }
+          console.log("data", data)
+          console.log("bookingData", bookingData)
+          console.log("searchData", searchData)
+          if (bookingData) {
+            const start_time = formatDateTime(bookingData.booking_start_time);
+            const end_time = formatDateTime(bookingData.booking_end_time);
+            const formattedTime = start_time + "-" + end_time.slice(-5);
+            responseAdminText = replaceResponseText(responseAdminText, {
+              ...bookingData,
+              formattedTime: formattedTime
+            });
+            console.log("replaceData", {
+              ...bookingData,
+              formattedTime: formattedTime
+            })
+          }
+
+          const replyData = {
+            accessToken: managerData.line_channel_access_token,
+            lineUid: lineId,
+            responseText: responseAdminText,
+            searchData: searchData,
+            procedureData: data
+          };
+          console.log("replyDataAdmin", replyData)
+          const response = await LineService.push(supabase, replyData);
+          console.log(response);
+        }
       }
     }
     return new Response(JSON.stringify({
@@ -114,6 +163,19 @@ const updateDb = async (updateData) => {
     console.error("動態更新失敗:", updateError.message);
   }
 };
+
+const getBookingData = async (uid) => {
+  if (!uid) return null;
+  const { data: bookingData, error } = await supabase.from("booking").select("*") // <-- 務必加入這一項
+    .eq("uid", uid).single();
+  if (error) {
+    console.error("查詢 booking 失敗:", error);
+    return null;
+  }
+  return bookingData;
+};
+
+
 const getManagerData = async (uid) => {
   if (!uid) return null;
   const { data: managerData, error } = await supabase.from("manager").select("line_notify_content, line_notify_default, line_channel_access_token") // <-- 務必加入這一項
@@ -124,6 +186,7 @@ const getManagerData = async (uid) => {
   }
   return managerData;
 };
+
 const getResponseText = (data, managerData) => {
   if (data) {
     return data.value || '';

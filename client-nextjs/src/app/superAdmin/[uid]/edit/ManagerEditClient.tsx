@@ -105,7 +105,8 @@ function LineNotifyBuilder({
       sample: '',
       has_text: true,
       procedure_name: '',
-      columns_json: JSON.stringify(['line_uid'])
+      columns_json: JSON.stringify(['line_uid']),
+      line_oa_reply: ''
     } as any])
   }
   const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i))
@@ -265,14 +266,31 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allOptio
 
 
         </div>
-        <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest ml-1">回覆內容</label>
-        <textarea
-          value={entry.value}
-          onChange={(e) => onUpdate(index, { value: e.target.value })}
-          placeholder="回覆內容..."
-          rows={5}
-          className="w-full bg-white/[0.02] border border-white/[0.07] rounded-xl py-3 px-4 text-xm text-slate-300 focus:outline-none focus:border-emerald-500/30 transition-all resize-y font-medium"
-        />
+
+        <div >
+          <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest ml-1">Notify 回覆內容</label>
+          <textarea
+            value={entry.value}
+            onChange={(e) => onUpdate(index, { value: e.target.value })}
+            placeholder="回覆內容..."
+            rows={5}
+            className="w-full bg-white/[0.02] border border-white/[0.07] rounded-xl py-3 px-4 text-xm text-slate-300 focus:outline-none focus:border-emerald-500/30 transition-all resize-y font-medium"
+          />
+        </div>
+
+
+
+        <div >
+          <label className="text-[14px] font-black text-slate-300 uppercase tracking-widest ml-1">Line 官方帳戶回覆</label>
+          <textarea
+            value={entry.line_oa_reply}
+            onChange={(e) => onUpdate(index, { line_oa_reply: e.target.value })}
+            placeholder="Line 官方帳戶回覆..."
+            rows={5}
+            className="w-full bg-white/[0.02] border border-white/[0.07] rounded-xl py-3 px-4 text-xm text-slate-300 focus:outline-none focus:border-emerald-500/30 transition-all resize-y font-medium"
+          />
+        </div>
+
 
         <MultiSelect
           label="需要其他服務嗎？"
@@ -292,17 +310,20 @@ function NotifyEntryRow({ index, entry, procedures, onUpdate, onRemove, allOptio
         </div>
       </>
 
-      )}
+      )
+      }
 
-      {!selectedProc?.has_text && (
-        <MultiSelect
-          label="未有資料時關鍵字"
-          options={allOptions}
-          selected={entry.no_data_keys || []}
-          onChange={(v) => onUpdate(index, { no_data_keys: v })}
-        />
-      )}
-    </div>
+      {
+        !selectedProc?.has_text && (
+          <MultiSelect
+            label="未有資料時關鍵字"
+            options={allOptions}
+            selected={entry.no_data_keys || []}
+            onChange={(v) => onUpdate(index, { no_data_keys: v })}
+          />
+        )
+      }
+    </div >
   )
 }
 
@@ -519,7 +540,7 @@ function jsonToEntries(raw: unknown): NotifyEntry[] {
       const no_data_keys = (e.no_data_keys || [])
         .map((k: string) => entries.find((target: any) => target.key === k)?.instanceId)
         .filter(Boolean);
-      return { ...e, more_keys, no_data_keys, upload_url: e.upload_url || '' };
+      return { ...e, more_keys, no_data_keys, upload_url: e.upload_url || '', line_oa_reply: e.line_oa_reply || '' };
     });
   } catch {
     return [];
@@ -751,10 +772,12 @@ export default function ManagerEditPage() {
           </div>
         </Section>
 
-        {/* LINE / Google 整合 */}
         <Section title="LINE / Google 整合" color="emerald" defaultOpen={false}>
           <Field label="LINE Channel Access Token">
             <input name="line_channel_access_token" defaultValue={manager?.line_channel_access_token} placeholder="Bearer token..." className={`${inputCls} font-mono text-ms`} />
+          </Field>
+          <Field label="LINE Official Account">
+            <input name="line_official_account" defaultValue={manager?.line_official_account} placeholder="line_id" className={`${inputCls} font-mono text-ms`} />
           </Field>
           <Field label="Google Calendar ID">
             <input name="google_calendar_id" defaultValue={manager?.google_calendar_id} placeholder="xxxx@group.calendar.google.com" className={`${inputCls} font-mono text-ms`} />
