@@ -49,6 +49,18 @@ export default function BookingList({
     router.push(`${pathname}?${params.toString()}`)
   }
 
+  const toggleFuture = () => {
+    const params = new URLSearchParams(searchParams.toString())
+    const isFuture = params.get('future') === 'true'
+    if (isFuture) {
+      params.delete('future')
+    } else {
+      params.set('future', 'true')
+    }
+    params.set('page', '1')
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString())
     params.set('page', newPage.toString())
@@ -146,9 +158,21 @@ export default function BookingList({
             className="w-full pl-12 pr-4 py-3 bg-white/10 rounded-xl border border-white/10 outline-none focus:border-purple-500/50 transition-all text-white placeholder-slate-400 font-bold"
           />
         </div>
-        <button type="submit" className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-white cursor-pointer">
-          搜尋
-        </button>
+        <div className="flex gap-2">
+          <button type="submit" className="flex-1 sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-white cursor-pointer">
+            搜尋
+          </button>
+          <button
+            type="button"
+            onClick={toggleFuture}
+            className={`whitespace-nowrap px-4 py-3 rounded-xl font-bold transition-all cursor-pointer border ${searchParams.get('future') === 'true'
+              ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-lg shadow-cyan-500/20'
+              : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-white/20'
+              }`}
+          >
+            未來 7 天
+          </button>
+        </div>
       </form>
 
       <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl shadow-2xl relative">
