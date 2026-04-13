@@ -43,7 +43,7 @@ cp env_sample.local .env.local
 
 主要變數包含：
 - `NEXT_PUBLIC_SUPABASE_URL`: Supabase URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase 匿名金鑰
+- `SUPABASE_SERVICE_ROLE_K`: Supabase 匿名金鑰
 - `NEXT_PUBLIC_LIFF_ID`: LINE LIFF ID
 - `NEXT_PUBLIC_GAS_URL`: Google Apps Script URL (用於日曆或其他整合)
 
