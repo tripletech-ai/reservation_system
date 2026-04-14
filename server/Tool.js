@@ -3,7 +3,7 @@
  * 呼叫範例：log("標題", "內容物件", "ERROR")
  */
 function log(...args) {
-    const ssId = "1UHsomTB7nn-3wEAGyr26xdEeDvGv1Y_B-wO7q8-_YAg";
+    const ssId = "1zWOgyUc3vs3G1LEROFycsPaQx7JWLBytwf7keuf2qM";
     const ss = SpreadsheetApp.openById(ssId);
     let sheet = ss.getSheetByName("log") || ss.insertSheet("log");
 
