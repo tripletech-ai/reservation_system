@@ -118,6 +118,7 @@ export type Event = {
   manager_uid: string
   title: string
   description: string | null
+  line_liff_id: string | null
   is_phone_required: boolean
   is_email_required: boolean
   schedule_menu_uid: string // JSON array of { uid: string }

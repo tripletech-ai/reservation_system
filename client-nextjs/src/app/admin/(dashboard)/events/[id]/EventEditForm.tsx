@@ -24,6 +24,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
   const [isPhoneRequired, setIsPhoneRequired] = useState(initialEvent?.is_phone_required ?? true)
   const [isEmailRequired, setIsEmailRequired] = useState(initialEvent?.is_email_required ?? false)
   const [bookingDynamicUrl, setBookingDynamicUrl] = useState(initialEvent?.booking_dynamic_url || '')
+  const [lineLiffId, setLineLiffId] = useState(initialEvent?.line_liff_id || '')
 
   const [options, setOptions] = useState(() => {
     try {
@@ -69,6 +70,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
       is_phone_required: isPhoneRequired,
       is_email_required: isEmailRequired,
       booking_dynamic_url: bookingDynamicUrl,
+      line_liff_id: lineLiffId,
       website_name: managerWebsiteName,
       options: JSON.stringify(options),
       schedule_menu_uid: JSON.stringify(selectedMenus)
@@ -140,7 +142,7 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="group">
                   <label className="text-ms font-bold text-slate-300 uppercase mb-2 block">動態網址路徑</label>
                   <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 group-focus-within:border-cyan-500/50 transition-all">
@@ -150,6 +152,19 @@ export default function EventEditForm({ id, managerUid, managerWebsiteName, init
                       value={bookingDynamicUrl}
                       onChange={(e) => setBookingDynamicUrl(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                       placeholder="massage-spa"
+                      className="w-full bg-transparent text-white font-mono text-xm outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="group">
+                  <label className="text-ms font-bold text-slate-300 uppercase mb-2 block">LINE LIFF ID</label>
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 group-focus-within:border-cyan-500/50 transition-all">
+                    <input
+                      type="text"
+                      value={lineLiffId}
+                      onChange={(e) => setLineLiffId(e.target.value)}
+                      placeholder="例如: 2000000000-XXXXXXXX"
                       className="w-full bg-transparent text-white font-mono text-xm outline-none"
                     />
                   </div>

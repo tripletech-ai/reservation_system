@@ -124,6 +124,7 @@ BEGIN
         manager_uid TEXT REFERENCES public.manager(uid) ON DELETE CASCADE, -- 改為 TEXT
         title TEXT,
         logo_url TEXT,
+        line_liff_id TEXT,
         description TEXT,
         is_phone_required BOOLEAN DEFAULT TRUE,
         is_email_required BOOLEAN DEFAULT FALSE,

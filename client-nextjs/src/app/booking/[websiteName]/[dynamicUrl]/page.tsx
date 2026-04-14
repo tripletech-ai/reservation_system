@@ -17,14 +17,16 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const { websiteName, dynamicUrl } = await params
   let { schedule_menu_uid, line_uid, limit } = await searchParams
 
-  if (CONFIG_ENV.nodeEnv != 'development' && !line_uid && limit != 'false') {
-    return <LiffInitializer />
-  }
 
   const data = await getBookingInfo(websiteName, dynamicUrl, schedule_menu_uid, line_uid)
   if (!data) {
     notFound()
   }
+
+  if (CONFIG_ENV.nodeEnv != 'development' && !line_uid && limit != 'false' && data.event.line_liff_id) {
+    return <LiffInitializer liffId={data.event.line_liff_id} />
+  }
+
 
   if (line_uid && !data.is_member) {
     const query = new URLSearchParams({
