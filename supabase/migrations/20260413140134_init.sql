@@ -160,6 +160,8 @@ BEGIN
         has_text boolean,
         sample TEXT,
         columns_json TEXT,
+        key TEXT,
+        procedure_name TEXT,
         no_data_key_type INTEGER,
         flex_message_type INTEGER,
         create_at TIMESTAMPTZ DEFAULT NOW(),
