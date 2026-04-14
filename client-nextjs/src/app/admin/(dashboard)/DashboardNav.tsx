@@ -30,7 +30,7 @@ export default function DashboardNav(session: Manager) {
       </header>
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-white/10 flex flex-col backdrop-blur-xl bg-black/90 md:bg-white/5 md:relative transform transition-transform duration-300 ease-in-out font-bold ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-50 border-r border-white/10 flex flex-col backdrop-blur-xl bg-black/90 md:bg-white/5 md:relative transform transition-transform duration-300 ease-in-out font-bold ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-8 hidden md:block">
           <Link href={ROUTES.ADMIN.MEMBERS} className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform font-black shrink-0">
