@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { loginAction } from '@/app/actions/superAuth'
 import { ROUTES } from '@/constants/routes'
 import { MANAGER_LEVEL } from '@/constants/common'
+import pkg from '../../../../package.json'
 
 export default function SuperAdminLoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -107,7 +108,7 @@ export default function SuperAdminLoginPage() {
         </div>
 
         <p className="text-center mt-12 text-[14px] text-slate-600 font-bold tracking-[0.2em] uppercase">
-          v1.0.0 © Power By Antigravity-Engine
+          v{pkg.version} © Power By Antigravity-Engine
         </p>
 
         {/* 2. 移除整段 <style jsx global> 區塊 */}

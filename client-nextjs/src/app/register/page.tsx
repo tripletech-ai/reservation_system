@@ -13,6 +13,7 @@ import {
 
 import { registerMember } from '@/app/actions/members'
 import { useAlert } from '@/components/ui/DialogProvider'
+import pkg from '../../../package.json'
 
 
 
@@ -273,7 +274,7 @@ function RegisterForm() {
         {/* Footer */}
         <footer className="mt-6 text-center opacity-40">
           <p className="text-[14px] font-black text-slate-400 tracking-[0.3em] uppercase">
-            v0.2.0 © SECURE RESERVATION GATEWAY
+            v{pkg.version} © SECURE RESERVATION
           </p>
         </footer>
       </div>
