@@ -73,7 +73,7 @@ function processBookingsFromSheet() {
   const rows = data.slice(1); // 排除標頭
   let count = 0;
   let cnacelCount = 0;
-
+  let more30d = 0;
 
   const sheet2 = ss.getSheetByName("管理員看的表格"); // 請確保分頁名稱正確
   const data2 = sheet2.getDataRange().getValues();
@@ -92,13 +92,27 @@ function processBookingsFromSheet() {
     if (!lineUid) return;
 
 
-    count++;
+
 
 
     // 1. 先取得 ISO 字串
     const startTimeStr = formatToSupabaseTz(row[6].toString());
     const endTimeStr = formatToSupabaseTz(row[7].toString());
 
+
+    const endDate = new Date(endTimeStr);
+    const now = new Date();
+
+    // 2. 計算 30 天前的時間點 (30天 * 24小時 * 60分 * 60秒 * 1000毫秒)
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    // 3. 如果結束時間早於（小於）30 天前，則 return
+    if (endDate < thirtyDaysAgo) {
+      console.log("30天前 index:", index)
+      more30d++;
+      return;
+    }
+    count++;
     // 2. 轉換為 Date 物件並相減（得到毫秒）
     const diffInMs = new Date(endTimeStr) - new Date(startTimeStr);
 
@@ -158,7 +172,7 @@ function processBookingsFromSheet() {
 
   });
 
-  console.log("total: " + rows.length + " insert: " + count + " cancel: " + cnacelCount)
+  console.log("total: " + rows.length + " insert: " + count + " cancel: " + cnacelCount + " more30d: " + more30d)
 
   // // 3. 最後呼叫自動存檔與清理
   callRpc('auto_archive_old_bookings', {});
