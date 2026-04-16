@@ -316,7 +316,7 @@ export default function BookingClient(props: BookingClientProps) {
     const payload = {
       manager_uid: event.manager_uid,
       name: formData.name,
-      phone: formData.phone,
+      phone: formData.phone.replace(/[- ]/g, '').padStart(10, '0').trim(),
       service_item: formData.selectedService.title,
       booking_start_time: TimeUtils.toUTC(startDateTime),
       booking_end_time: TimeUtils.toUTC(endDateTime),

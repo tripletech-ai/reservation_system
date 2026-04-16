@@ -98,7 +98,7 @@ function RegisterForm() {
         manager_uid,
         name: formData.name,
         line_uid: line_uid.replace(/["']/g, ''),
-        phone: formData.phone.replace(/[- ]/g, ''),
+        phone: formData.phone.replace(/[- ]/g, '').padStart(10, '0').trim(),
         email: formData.email,
         questionnaire: JSON.stringify(finalAnswers)
       }
