@@ -1,5 +1,5 @@
 const TABLE_NAME = 'member';
-const MANAGER_UID = "kX2p9W5y";
+const MANAGER_UID = "oKPebvBF";
 const sheetId = "1gGmHcKcyhI7zvSwTz2eRNmuvEHiwCeUaDRN_m85HPl4";
 const sheetmember = "會員資料";
 const sheetbook = "預約資料";
