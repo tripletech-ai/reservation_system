@@ -636,7 +636,7 @@ const statusMap = {
   },
   [status.bookingSuccess]: {
     text: '預約成功',
-    color: '#888888'
+    color: '#28FF28'
   },
   [status.cancel]: {
     text: '取消預約',

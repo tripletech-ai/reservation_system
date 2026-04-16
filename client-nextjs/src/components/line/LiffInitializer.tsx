@@ -2,17 +2,15 @@
 
 import { useEffect } from 'react'
 import { initLiff, getLiffProfile } from '@/lib/liff'
-import { CONFIG_ENV } from '@/lib/env'
 
 /**
  * LIFF 身份初始化組件
  * 當 URL 中缺少 line_uid 時，透過此組件取得 LINE 身分後並重新導向原頁面
  */
-export default function LiffInitializer() {
-
+export default function LiffInitializer({ liffId }: { liffId: string }) {
+  console.log('liffId', liffId)
   useEffect(() => {
     const initAndRedirect = async () => {
-      const liffId = CONFIG_ENV.liffId || ''
       if (!liffId) return
 
       localStorage.setItem('line_back_url', window.location.href)

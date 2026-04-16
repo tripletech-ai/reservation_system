@@ -80,7 +80,8 @@ BEGIN
         booking_start_time TIMESTAMPTZ,
         booked_count INTEGER DEFAULT 0,
         create_at TIMESTAMPTZ DEFAULT NOW(),
-        update_at TIMESTAMPTZ DEFAULT NOW()
+        update_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (manager_uid, booking_start_time)
     );
 
     -- 營業時間選單 (schedule_menu)
@@ -124,6 +125,7 @@ BEGIN
         manager_uid TEXT REFERENCES public.manager(uid) ON DELETE CASCADE, -- 改為 TEXT
         title TEXT,
         logo_url TEXT,
+        line_liff_id TEXT,
         description TEXT,
         is_phone_required BOOLEAN DEFAULT TRUE,
         is_email_required BOOLEAN DEFAULT FALSE,
