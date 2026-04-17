@@ -67,7 +67,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
           // 因為主流程不等待，這裡的錯誤必須在內部捕捉，否則會導致 UnhandledPromiseRejection
           console.error('背景同步失敗:', error);
         }
-      });
+      })();
     }
 
     if (result.line_uid) {
