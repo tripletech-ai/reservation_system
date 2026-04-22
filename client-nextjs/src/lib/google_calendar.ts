@@ -1,5 +1,6 @@
 import { GasPayload } from "@/types";
 import { CONFIG_ENV } from "./env";
+import axios from "axios";
 
 const GAS_URL = CONFIG_ENV.google.gasUrl;
 
@@ -16,26 +17,26 @@ export class GoogleCalendarService {
             return "SKIPPED";
         }
         try {
-            const response = await fetch(GAS_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify(payload),
+            const response = await axios.post(GAS_URL, payload, {
+                headers: {
+                    'Content-Type': 'text/plain'
+                }
             });
-
-            // if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
-            console.log("response", response)
-            const text = await response.text();
-            console.log("text", text)
-            const result = await response.json();
+            console.log("response", response);
+            const result = response.data;
+            console.log("GAS 回傳內容:", result);
 
             if (!result.success) {
                 throw new Error(`GAS 執行失敗: ${result.error}`);
             }
 
             return result.result; // 回傳 eventId 或 "OK"
-        } catch (error) {
-            console.error("Google Calendar 同步異常:", error);
-            throw error;
+
+        } catch (error: any) {
+            // Axios 會自動捕捉 4xx, 5xx 或網路錯誤
+            const errorMessage = error.response?.data?.error || error.message;
+            console.error("請求發生錯誤:", errorMessage);
+            throw new Error(errorMessage);
         }
     }
 }
