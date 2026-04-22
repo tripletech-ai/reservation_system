@@ -776,7 +776,7 @@ export default function ManagerEditPage() {
           <Field label="LINE Channel Access Token">
             <input name="line_channel_access_token" defaultValue={manager?.line_channel_access_token} placeholder="Bearer token..." className={`${inputCls} font-mono text-ms`} />
           </Field>
-          <Field label="LINE Official Account">
+          <Field label="LINE管理員帳號(可複數)">
             <input name="line_official_account" defaultValue={manager?.line_official_account} placeholder="line_id" className={`${inputCls} font-mono text-ms`} />
           </Field>
           <Field label="Google Calendar ID">
