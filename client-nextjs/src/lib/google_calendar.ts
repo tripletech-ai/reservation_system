@@ -19,14 +19,16 @@ export class GoogleCalendarService {
         try {
             console.log("payload", payload);
             console.log("GAS_URL", GAS_URL);
-            const response = await axios.post(GAS_URL, payload, {
-                headers: {
-                    'Content-Type': 'text/plain'
-                }
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(payload),
+                redirect: 'follow',  // 明確跟隨 redirect
             });
-            console.log("response", response);
-            const result = response.data;
-            console.log("GAS 回傳內容:", result);
+
+            const text = await response.text();   // 先用 text() 不要用 json()
+            console.log("raw response:", text);
+            const result = JSON.parse(text);
 
             if (!result.success) {
                 throw new Error(`GAS 執行失敗: ${result.error}`);
