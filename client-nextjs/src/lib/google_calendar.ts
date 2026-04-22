@@ -14,7 +14,7 @@ export class GoogleCalendarService {
             console.warn("GAS_URL is not defined, skipping Google Calendar sync.");
             return "SKIPPED";
         }
-
+        console.log("payload", payload)
         try {
             // 1. 將 payload 轉為 JSON 字串並進行編碼
             const dataParam = encodeURIComponent(JSON.stringify(payload));
@@ -30,8 +30,9 @@ export class GoogleCalendarService {
                 redirect: "follow",
                 cache: 'no-store',
             });
+            console.log("response", response)
             const ss = await response.text()
-            console.log("response", ss)
+            console.log("ss", ss)
             // if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
 
             // const result = await response.json();
