@@ -22,11 +22,11 @@ export class GoogleCalendarService {
                 body: JSON.stringify(payload),
                 redirect: "follow",
             });
-
+            console.log("response", response)
             if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
 
             const result = await response.json();
-
+            console.log("result0", result)
             if (!result.success) {
                 throw new Error(`GAS 執行失敗: ${result.error}`);
             }
