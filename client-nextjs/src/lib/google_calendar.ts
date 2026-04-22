@@ -25,7 +25,7 @@ export class GoogleCalendarService {
                 body: JSON.stringify(payload),
                 redirect: 'follow',  // 明確跟隨 redirect
             });
-
+            console.log("response", response);
             const text = await response.text();   // 先用 text() 不要用 json()
             console.log("raw response:", text);
             const result = JSON.parse(text);
