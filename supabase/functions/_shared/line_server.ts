@@ -31,9 +31,9 @@ import { formatDateTime } from "./tool.ts";
     const { accessToken, lineUid, responseText, searchData, payloadRequest } = replyData;
     if (!accessToken || !lineUid) return;
     console.log("payloadRequest", payloadRequest);
-    console.log("payloadReques222", (payloadRequest.flexType !== null && payloadRequest.flexType !== undefined));
+
     let messages;
-    if (payloadRequest.flexType !== null && payloadRequest.flexType !== undefined) {
+    if (payloadRequest && payloadRequest.flexType && payloadRequest.flexType !== null && payloadRequest.flexType !== undefined) {
       const flex = getFlexCancelBooking(payloadRequest)
       console.log("flex", flex);
       messages = [{
