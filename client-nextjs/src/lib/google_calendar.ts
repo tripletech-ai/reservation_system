@@ -17,6 +17,8 @@ export class GoogleCalendarService {
             return "SKIPPED";
         }
         try {
+            console.log("payload", payload);
+            console.log("GAS_URL", GAS_URL);
             const response = await axios.post(GAS_URL, payload, {
                 headers: {
                     'Content-Type': 'text/plain'
