@@ -181,6 +181,7 @@ export type GasPayload = {
     booking_end_time?: string;
     service_computed_duration?: number;
     line_uid?: string;
+    booking_uid?: string;
     color_id?: string;
   };
 }

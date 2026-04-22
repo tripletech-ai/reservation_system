@@ -39,35 +39,51 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
     console.log("result", result)
     if (result.google_calendar_id) {
 
-      (async () => {
-        try {
-          // 內部的 await 會確保這兩步是「自己等待自己」按順序執行的
-          const google_calendar_event_id = await GoogleCalendarService.sync({
-            action: 'CREATE',
-            googleCalendarId: result.google_calendar_id,
-            data: {
-              name: payload.name,
-              phone: payload.phone || '',
-              email: payload.email || '',
-              service_item: payload.service_item,
-              booking_start_time: payload.booking_start_time,
-              booking_end_time: payload.booking_end_time,
-              service_computed_duration: payload.service_computed_duration,
-              line_uid: payload.line_uid || result.line_uid,
-              color_id: GOOGLE_CALENDAR_COLOR_ID.GRAY.toString()
-            }
-          });
-          console.log("google_calendar_event_id", google_calendar_event_id)
-          await supabaseAdmin.from('booking').update({
-            google_calendar_event_id: google_calendar_event_id
-          }).eq('uid', result.booking_uid);
-
-          console.log('背景同步完成');
-        } catch (error) {
-          // 因為主流程不等待，這裡的錯誤必須在內部捕捉，否則會導致 UnhandledPromiseRejection
-          console.error('背景同步失敗:', error);
+      await GoogleCalendarService.sync({
+        action: 'CREATE',
+        googleCalendarId: result.google_calendar_id,
+        data: {
+          name: payload.name,
+          phone: payload.phone || '',
+          email: payload.email || '',
+          service_item: payload.service_item,
+          booking_start_time: payload.booking_start_time,
+          booking_end_time: payload.booking_end_time,
+          service_computed_duration: payload.service_computed_duration,
+          line_uid: payload.line_uid || result.line_uid,
+          booking_uid: result.booking_uid,
+          color_id: GOOGLE_CALENDAR_COLOR_ID.GRAY.toString()
         }
-      })();
+      });
+      // (async () => {
+      //   try {
+      //     // 內部的 await 會確保這兩步是「自己等待自己」按順序執行的
+      //     const google_calendar_event_id = await GoogleCalendarService.sync({
+      //       action: 'CREATE',
+      //       googleCalendarId: result.google_calendar_id,
+      //       data: {
+      //         name: payload.name,
+      //         phone: payload.phone || '',
+      //         email: payload.email || '',
+      //         service_item: payload.service_item,
+      //         booking_start_time: payload.booking_start_time,
+      //         booking_end_time: payload.booking_end_time,
+      //         service_computed_duration: payload.service_computed_duration,
+      //         line_uid: payload.line_uid || result.line_uid,
+      //         color_id: GOOGLE_CALENDAR_COLOR_ID.GRAY.toString()
+      //       }
+      //     });
+      //     console.log("google_calendar_event_id", google_calendar_event_id)
+      //     await supabaseAdmin.from('booking').update({
+      //       google_calendar_event_id: google_calendar_event_id
+      //     }).eq('uid', result.booking_uid);
+
+      //     console.log('背景同步完成');
+      //   } catch (error) {
+      //     // 因為主流程不等待，這裡的錯誤必須在內部捕捉，否則會導致 UnhandledPromiseRejection
+      //     console.error('背景同步失敗:', error);
+      //   }
+      // })();
     }
 
     if (result.line_uid) {
