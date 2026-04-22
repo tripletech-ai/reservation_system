@@ -19,7 +19,7 @@ export class GoogleCalendarService {
             const response = await fetch(GAS_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify(payload).replace(/[\u2028\u2029]/g, ''),
+                body: JSON.stringify(payload),
                 redirect: "follow",
             });
             console.log("response", response)
