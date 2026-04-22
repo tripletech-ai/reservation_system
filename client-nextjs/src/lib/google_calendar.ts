@@ -18,8 +18,15 @@ export class GoogleCalendarService {
         try {
             const response = await fetch(GAS_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `data=${encodeURIComponent(JSON.stringify(payload))}`,
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8",
+                    // 隨機切換 User-Agent
+                    "User-Agent": `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.${Math.floor(Math.random() * 1000)}.0 Safari/537.36`,
+                    // 強制不緩存，並加入一個隨機參數在 URL 上，繞過 Google 的網關緩存
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache"
+                },
+                body: JSON.stringify(payload),
                 redirect: "follow",
                 cache: 'no-store', // 強制不使用緩存
             });
