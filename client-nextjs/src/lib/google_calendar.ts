@@ -18,11 +18,8 @@ export class GoogleCalendarService {
         try {
             const response = await fetch(GAS_URL, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "text/plain",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                },
-                body: JSON.stringify(payload),
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `data=${encodeURIComponent(JSON.stringify(payload))}`,
                 redirect: "follow",
                 cache: 'no-store', // 強制不使用緩存
             });
