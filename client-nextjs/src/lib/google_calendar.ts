@@ -20,6 +20,7 @@ export class GoogleCalendarService {
                 method: "POST",
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify(payload),
+                redirect: "follow",
             });
 
             if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
