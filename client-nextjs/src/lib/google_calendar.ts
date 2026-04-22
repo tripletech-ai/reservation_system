@@ -21,6 +21,7 @@ export class GoogleCalendarService {
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify(payload),
                 redirect: "follow",
+                cache: 'no-store', // 強制不使用緩存
             });
             console.log("response", response)
             if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
