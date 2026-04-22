@@ -22,7 +22,7 @@ export class GoogleCalendarService {
                 body: JSON.stringify(payload),
             });
 
-            if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
+            // if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
             console.log("response", response)
             const text = await response.text();
             console.log("text", text)
