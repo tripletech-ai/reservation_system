@@ -36,7 +36,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
       return { success: false, message: result.msg }
     }
 
-    console.log("result", payload)
+    console.log("result", result)
     if (result.google_calendar_id) {
 
       (async () => {
@@ -57,7 +57,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
               color_id: GOOGLE_CALENDAR_COLOR_ID.GRAY.toString()
             }
           });
-
+          console.log("google_calendar_event_id", google_calendar_event_id)
           await supabaseAdmin.from('booking').update({
             google_calendar_event_id: google_calendar_event_id
           }).eq('uid', result.booking_uid);
