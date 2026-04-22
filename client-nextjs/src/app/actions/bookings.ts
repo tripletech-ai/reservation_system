@@ -36,7 +36,7 @@ export async function submitBooking(payload: any, maxCapacityArray: number[], ti
       return { success: false, message: result.msg }
     }
 
-    console.log("result", payload)
+    console.log("result", result)
     if (result.google_calendar_id) {
 
       GoogleCalendarService.sync({
