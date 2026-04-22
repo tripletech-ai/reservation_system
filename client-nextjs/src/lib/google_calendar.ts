@@ -30,15 +30,17 @@ export class GoogleCalendarService {
                 redirect: "follow",
                 cache: 'no-store',
             });
+            const ss = await response.text()
+            console.log("response", ss)
+            // if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
 
-            if (!response.ok) throw new Error(`網路回應錯誤: ${response.status}`);
+            // const result = await response.json();
+            // console.log("result", result)
+            // if (!result.success) {
+            //     throw new Error(`GAS 執行失敗: ${result.error}`);
+            // }
 
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(`GAS 執行失敗: ${result.error}`);
-            }
-
-            return result.result;
+            return ss;
         } catch (error) {
             console.error("Google Calendar 同步異常:", error);
             throw error;
